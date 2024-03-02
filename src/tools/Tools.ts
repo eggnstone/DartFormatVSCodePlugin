@@ -1,6 +1,6 @@
 import fs from "fs";
 import vscode from "vscode";
-import {LinkInfo} from "./LinkInfo";
+import {LinkInfo} from "../data/LinkInfo";
 
 export function logDebug(s: string): void
 {
@@ -74,12 +74,30 @@ export class Tools
         return process.platform === "win32";
     }
 
-    static logDebug(s: string)
+    static logDebug(s: string): void
     {
         Tools.debugOutputChannel.appendLine(s);
     }
 
-    static async showError(message: string, content: string, actions: LinkInfo[]): Promise<void>
+    static showError(message: string, content: string, actions: LinkInfo[]): void
+    {
+        // noinspection ES6MissingAwait
+        this.showErrorAsync(message, content, actions);
+    }
+
+    static showInfo(message: string): void
+    {
+        // noinspection JSIgnoredPromiseFromCall
+        vscode.window.showInformationMessage(message);
+    }
+
+    static showWarning(message: string): void
+    {
+        // noinspection JSIgnoredPromiseFromCall
+        vscode.window.showWarningMessage(message);
+    }
+
+    private static async showErrorAsync(message: string, content: string, actions: LinkInfo[]): Promise<void>
     {
         const fixedContent = content
             .replace(/\n/g, " ")
@@ -99,17 +117,5 @@ export class Tools
         {
             vscode.env.openExternal(vscode.Uri.parse(linkInfo.url));
         }
-    }
-
-    static showInfo(message: string): void
-    {
-        // noinspection JSIgnoredPromiseFromCall
-        vscode.window.showInformationMessage(message);
-    }
-
-    static showWarning(message: string): void
-    {
-        // noinspection JSIgnoredPromiseFromCall
-        vscode.window.showWarningMessage(message);
     }
 }

@@ -1,14 +1,15 @@
 import * as vscode from 'vscode';
 import {Position, Range} from "vscode";
-import {Tools} from "./Tools";
+import {logDebug, Tools} from "./tools/Tools";
+import {ChildProcess, spawn} from "node:child_process";
+import {SpawnOptions} from "child_process";
+import {JsonTools} from "./tools/JsonTools";
 
 let isDartFormatProcessRunning = false;
 
 // noinspection JSUnusedGlobalSymbols
 export async function activate(context: vscode.ExtensionContext): Promise<void>
 {
-    Tools.showInfo('DartFormat is starting ...');
-
     const disposable = vscode.commands.registerCommand('DartFormat.format', format);
     context.subscriptions.push(disposable);
 
@@ -62,17 +63,39 @@ async function format(): Promise<void>
 async function startExternalDartFormatProcess(): Promise<boolean>
 {
     const externalDartFormatFilePathOrError = Tools.getExternalDartFormatFilePathOrError();
-    Tools.showInfo(`externalDartFormatFilePathOrError: ${externalDartFormatFilePathOrError}`);
     if (externalDartFormatFilePathOrError instanceof Error)
     {
-        const title = "Failed to find external dart_format: " + externalDartFormatFilePathOrError.message;
+        const title = "Failed to start external dart_format: " + externalDartFormatFilePathOrError.message;
         const content = "Did you install the dart_format package?\n" +
             "Basically just execute this:<pre>dart pub global activate dart_format</pre>";
         const actions = [Tools.createCheckInstallationInstructionsLink()];
-        await Tools.showError(title, content, actions);
+        Tools.showError(title, content, actions);
         return false;
     }
 
+    const args = ["--web", "--errors-as-json", "--log-to-temp-file"];
+    const spawnOptions: SpawnOptions = {shell: false, stdio: "pipe"};
+
+    logDebug("Starting external dart_format: " + externalDartFormatFilePathOrError + " " + args.join(" "));
+    const process = spawn(externalDartFormatFilePathOrError + "x", args, spawnOptions);
+
+    logDebug("process.exitCode: " + process.exitCode);
+    logDebug("process.pid: " + process.pid);
+    logDebug("process: " + JsonTools.stringify(process));
+
+    if (process.pid === undefined)
+    {
+        const title = "Failed to start external dart_format: ?";
+        const content = "Did you install the dart_format package?\n" +
+            "Basically just execute this:<pre>dart pub global activate dart_format</pre>";
+        const actions = [Tools.createCheckInstallationInstructionsLink()];
+        Tools.showError(title, content, actions);
+        return false;
+    }
+
+    /*
+
+     */
     //isDartFormatProcessRunning = true;
     return true;
 }
