@@ -3,7 +3,7 @@
   "displayName": "DartFormat",
   "description": "A formatter for Dart.",
   "publisher": "eggnstone",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "repository": "https://github.com/eggnstone/DartFormatVSCodePlugin",
   "icon": "images/DartFormat512.png",
   "engines": {

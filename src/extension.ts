@@ -7,8 +7,8 @@ export function activate(context: vscode.ExtensionContext)
     let disposable = vscode.commands.registerCommand('DartFormat.format', () =>
     {
         // noinspection JSIgnoredPromiseFromCall
-        vscode.window.showInformationMessage('Hello World from DartFormat!<br/>' +
-            'Coming soon to format your Dart files :)');
+        vscode.window.showInformationMessage('Hello World from DartFormat!' +
+            ' Coming soon to format your Dart files :)');
     });
 
     context.subscriptions.push(disposable);
