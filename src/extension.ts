@@ -1,39 +1,49 @@
 import * as vscode from 'vscode';
 import {Position, Range} from "vscode";
+import {Tools} from "./Tools";
+
+let isDartFormatProcessRunning = false;
 
 // noinspection JSUnusedGlobalSymbols
-export function activate(context: vscode.ExtensionContext)
+export async function activate(context: vscode.ExtensionContext): Promise<void>
 {
-    showInfo('DartFormat is starting ...');
+    Tools.showInfo('DartFormat is starting ...');
+
     const disposable = vscode.commands.registerCommand('DartFormat.format', format);
     context.subscriptions.push(disposable);
+
+    await startExternalDartFormatProcess();
 }
 
 // noinspection JSUnusedGlobalSymbols
 export async function deactivate(): Promise<void>
 {
-    showInfo('DartFormat is stopping ...');
-
+    Tools.showInfo('DartFormat is stopping ...');
     await new Promise(resolve => setTimeout(resolve, 1000));
-
-    showInfo('DartFormat is stopped.');
+    Tools.showInfo('DartFormat is stopped.');
 }
 
-async function formatText(unformattedText: string)
+async function formatText(unformattedText: string): Promise<string>
 {
     return "/* TODO */\n" + unformattedText;
 }
 
-export async function format(): Promise<void>
+async function format(): Promise<void>
 {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor)
+    if (!isDartFormatProcessRunning)
     {
-        showInfo("Please open a file in order to format it.");
+        Tools.showWarning('DartFormat: External dart format process is not running.');
         return;
     }
 
-    showInfo('Formatting ...');
+    const editor = vscode.window.activeTextEditor;
+    if (!editor)
+    {
+        Tools.showInfo("Please open a file in order to format it.");
+        return;
+    }
+
+    Tools.showInfo('Formatting ...');
 
     const document = editor.document;
     const unformattedText = document.getText();
@@ -46,11 +56,24 @@ export async function format(): Promise<void>
         editBuilder.replace(new Range(startPos, endPos), formattedText);
     });
 
-    showInfo('Done formatting.');
+    Tools.showInfo('Done formatting.');
 }
 
-function showInfo(message: string)
+async function startExternalDartFormatProcess(): Promise<boolean>
 {
-    // noinspection JSIgnoredPromiseFromCall
-    vscode.window.showInformationMessage(message);
+    const externalDartFormatFilePathOrError = Tools.getExternalDartFormatFilePathOrError();
+    Tools.showInfo(`externalDartFormatFilePathOrError: ${externalDartFormatFilePathOrError}`);
+    if (externalDartFormatFilePathOrError instanceof Error)
+    {
+        const title = "Failed to find external dart_format: " + externalDartFormatFilePathOrError.message;
+        const content = "Did you install the dart_format package?\n" +
+            "Basically just execute this:<pre>dart pub global activate dart_format</pre>";
+        const actions = [Tools.createCheckInstallationInstructionsLink()];
+        await Tools.showError(title, content, actions);
+        return false;
+    }
+
+    //isDartFormatProcessRunning = true;
+    return true;
 }
+
