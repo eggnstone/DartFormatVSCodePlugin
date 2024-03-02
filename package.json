@@ -1,5 +1,7 @@
 {
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "categories": [
     "Formatters"
   ],
