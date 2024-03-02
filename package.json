@@ -3,7 +3,7 @@
   "displayName": "DartFormat",
   "description": "A formatter for Dart.",
   "publisher": "eggnstone",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "repository": "https://github.com/eggnstone/DartFormatVSCodePlugin",
   "icon": "images/DartFormat512.png",
   "engines": {
@@ -18,7 +18,13 @@
     "commands": [
       {
         "command": "DartFormat.helloWorld",
-        "title": "Hello World"
+        "title": "Hello World",
+        "shortcuts": [
+          {
+            "mac": "Cmd+Alt+Comma",
+            "win": "Ctrl+Alt+oem_comma"
+          }
+        ]
       }
     ]
   },

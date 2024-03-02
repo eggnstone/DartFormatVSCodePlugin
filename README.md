@@ -6,7 +6,7 @@ Like dartfmt.
 But better ;)  
 Because it's configurable.
 
-(coming soon.)
+(coming soon)
 
 In the meantime, please check out the following resources:
 * [dart_format](https://pub.dev/packages/dart_format) package on [pub.dev](https://pub.dev).
