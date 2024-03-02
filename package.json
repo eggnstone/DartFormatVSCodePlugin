@@ -1,13 +1,15 @@
 {
   "name": "DartFormat",
   "displayName": "DartFormat",
-  "description": "DESC",
-  "version": "0.0.1",
+  "description": "A formatter for Dart.",
+  "publisher": "eggnstone",
+  "version": "0.0.6",
+  "icon": "images/DartFormat512.png",
   "engines": {
     "vscode": "^1.87.0"
   },
   "categories": [
-    "Other"
+    "Formatters"
   ],
   "activationEvents": [],
   "main": "./out/extension.js",
