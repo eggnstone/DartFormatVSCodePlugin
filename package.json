@@ -1,19 +1,8 @@
 {
-  "name": "DartFormat",
-  "displayName": "DartFormat",
-  "description": "A formatter for Dart.",
-  "publisher": "eggnstone",
-  "version": "0.0.11",
-  "repository": "https://github.com/eggnstone/DartFormatVSCodePlugin",
-  "icon": "images/DartFormat512.png",
-  "engines": {
-    "vscode": "^1.87.0"
-  },
+  "activationEvents": [],
   "categories": [
     "Formatters"
   ],
-  "activationEvents": [],
-  "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
@@ -29,14 +18,7 @@
       }
     ]
   },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "vscode-test"
-  },
+  "description": "A formatter for Dart. Like dartfmt. But better ;) Because it's configurable.",
   "devDependencies": {
     "@types/vscode": "^1.87.0",
     "@types/mocha": "^10.0.6",
@@ -47,5 +29,23 @@
     "typescript": "^5.3.3",
     "@vscode/test-cli": "^0.0.6",
     "@vscode/test-electron": "^2.3.9"
-  }
+  },
+  "displayName": "DartFormat",
+  "engines": {
+    "vscode": "^1.87.0"
+  },
+  "icon": "images/DartFormat512.png",
+  "main": "./out/extension.js",
+  "name": "DartFormat",
+  "publisher": "eggnstone",
+  "repository": "https://github.com/eggnstone/DartFormatVSCodePlugin",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test"
+  },
+  "version": "0.0.12"
 }

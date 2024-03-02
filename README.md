@@ -6,6 +6,8 @@ Like dartfmt.
 But better ;)  
 Because it's configurable.
 
+Press `Ctrl`+`Alt`+`,` to format your code.
+
 (coming soon)
 
 In the meantime, please check out the following resources:
