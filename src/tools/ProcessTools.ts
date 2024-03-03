@@ -1,15 +1,17 @@
-import {ChildProcess} from "node:child_process";
+import {Process} from "../Process";
 
 export class ProcessTools
 {
     // Returns true when process died.
-    static async waitFor(process: ChildProcess, waitInMillis: number)
+    static async waitFor(process: Process, waitInMillis: number): Promise<boolean>
     {
-        if (!process.connected)
+        if (!process.isAlive())
+        {
             return true;
+        }
 
         await new Promise(resolve => setTimeout(resolve, waitInMillis));
 
-        return !process.connected;
+        return !process.isAlive();
     }
 }

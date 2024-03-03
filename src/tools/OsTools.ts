@@ -1,6 +1,4 @@
 import fs from "fs";
-import vscode from "vscode";
-import {LinkInfo} from "../data/LinkInfo";
 import {logDebug} from "./LogTools";
 
 export class OsTools

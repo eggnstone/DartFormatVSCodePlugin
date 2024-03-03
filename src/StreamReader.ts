@@ -1,53 +1,63 @@
 import {Readable} from "node:stream";
+import {logDebug} from "./tools/LogTools";
+import {StringTools} from "./tools/StringTools";
 
 export class StreamReader
 {
-    private readonly inputStream: Readable;
+    private static readonly NEW_LINE_CODE = 10;
+
     private buffer: string = "";
 
-    constructor(inputStream: Readable)
+    constructor(inputStream: Readable, name: string)
     {
-        this.inputStream = inputStream;
+        inputStream.on("data", (data) =>
+        {
+            logDebug(`StreamReader(${name}).onData(${StringTools.toDisplayString(data)})`);
+            this.buffer += data.toString();
+        });
     }
 
     readLine(): string
     {
+        logDebug("StreamReader.readLine()");
+
         let s = "";
 
         while (true)
         {
-            const c = this.inputStream.read();
+            const c = this.read();
+            //logDebug("StreamReader.readLine() c: " + c);
 
             if (c === -1)
             {
                 break;
             }
 
-            if (c === '\n') //.code)
+            if (c === StreamReader.NEW_LINE_CODE)
             {
                 break;
             }
 
-            s += c; //.toChar();
+            s += String.fromCharCode(c);
         }
 
         return s;
     }
 
-    available(): boolean
+    private read(): number
     {
-        if (this.buffer.length > 0)
+        if (this.buffer.length === 0)
         {
-            return true;
+            return -1; // EOF
         }
 
-        const data = this.inputStream.read();
-        if (!data)
-        {
-            return false;
-        }
+        const c = this.buffer.charCodeAt(0);
+        this.buffer = this.buffer.substring(1);
+        return c ;
+    }
 
-        this.buffer = data.toString();
-        return true;
+    available(): number
+    {
+        return this.buffer.length;
     }
 }

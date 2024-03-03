@@ -1,6 +1,4 @@
-import * as Process from "process";
 import {StreamReader} from "./StreamReader";
-import {ChildProcess} from "node:child_process";
 import {ReadLineResponse} from "./data/ReadLineResponse";
 import {Constants} from "./Constants";
 import {StringTools} from "./tools/StringTools";
@@ -9,12 +7,13 @@ import {ProcessTools} from "./tools/ProcessTools";
 import {NotificationTools} from "./tools/NotificationTools";
 import {logDebug, logError} from "./tools/LogTools";
 import {Tools} from "./tools/Tools";
+import {Process} from "./Process";
 
 export class TimedReader
 {
     private static readonly CLASS_NAME = "TimedReader";
 
-    static async readLine(process: ChildProcess, stdOutReader: StreamReader, stdErrReader: StreamReader, timeoutInSeconds: number, waitForName: String): Promise<ReadLineResponse | undefined>
+    static async readLine(process: Process, stdOutReader: StreamReader, stdErrReader: StreamReader, timeoutInSeconds: number, waitForName: String): Promise<ReadLineResponse | undefined>
     {
         const METHOD_NAME = TimedReader.CLASS_NAME + ".readLine";
         logDebug(METHOD_NAME + "()");
@@ -22,13 +21,13 @@ export class TimedReader
         let waitedMillis = 0;
         while (timeoutInSeconds < 0 || waitedMillis < timeoutInSeconds * 1000)
         {
-            const textFromStdOut = TimedReader.receiveLine(stdOutReader);
+            const textFromStdOut = TimedReader.receiveLine(stdOutReader, "stdout");
             if (textFromStdOut)
             {
                 return new ReadLineResponse(textFromStdOut, undefined);
             }
 
-            const textFromStdErr = TimedReader.receiveLine(stdErrReader);
+            const textFromStdErr = TimedReader.receiveLine(stdErrReader, "stderr");
             if (textFromStdErr)
             {
                 return new ReadLineResponse(undefined, textFromStdErr);
@@ -36,11 +35,11 @@ export class TimedReader
 
             if (await ProcessTools.waitFor(process, Constants.WAIT_INTERVAL_IN_MILLIS))
             {
-                const title = "Unexpected process exit while waiting for $waitForName.";
+                const title = `Unexpected process exit while waiting for ${waitForName}.`;
 
                 let content = "";
-                content += TimedReader.receiveLines(stdOutReader, "\nStdOut: ") ?? "";
-                content += TimedReader.receiveLines(stdErrReader, "\nStdErr: ") ?? "";
+                content += TimedReader.receiveLines(stdOutReader, "stdout", "\nStdOut: ") ?? "";
+                content += TimedReader.receiveLines(stdErrReader, "stderr", "\nStdErr: ") ?? "";
                 content = content.trim();
 
                 if (content)
@@ -62,39 +61,39 @@ export class TimedReader
             waitedMillis += Constants.WAIT_INTERVAL_IN_MILLIS;
         }
 
-        logDebug(METHOD_NAME + ": waitedMillis: $waitedMillis");
+        logDebug(`${METHOD_NAME}: waitedMillis: ${waitedMillis}`);
 
         const errorText = "Timeout while waiting for response.";
-        logError(METHOD_NAME + ": $errorText");
+        logError(`${METHOD_NAME}: ${errorText}`);
         throw DartFormatError.localError(errorText);
     }
 
-    private static receiveLine(streamReader: StreamReader): string | undefined
+    private static receiveLine(streamReader: StreamReader, name: string): string | undefined
     {
-        if (!streamReader.available())
-        {
+        const availableBytes = streamReader.available();
+        if (availableBytes <= 0)
             return undefined;
-        }
 
-        logDebug("TimedReader.receiveLine: Receiving: $availableBytes bytes.");
+        logDebug(`TimedReader.receiveLine(${name})`);
+        logDebug(`  Receiving: ${availableBytes} bytes.`);
         const s = streamReader.readLine();
-        logDebug("TimedReader.receiveLine: Received: ${StringTools.toDisplayString(s, 100)}.");
+        logDebug(`  Received: ${StringTools.toDisplayString(s)}.`);
         return s;
     }
 
-    private static receiveLines(streamReader: StreamReader, prefix: String): string | undefined
+    private static receiveLines(streamReader: StreamReader, name: string, prefix: String): string | undefined
     {
         let r = "";
 
         while (true)
         {
-            const s = TimedReader.receiveLine(streamReader);
+            const s = TimedReader.receiveLine(streamReader, name);
             if (!s)
             {
                 break;
             }
 
-            logDebug("TimedReader.receiveLines: Received: " + StringTools.toDisplayString(s, 100) + ".");
+            logDebug(`TimedReader.receiveLines: Received: ${StringTools.toDisplayString(s)}.`);
             r += prefix + s;
         }
 

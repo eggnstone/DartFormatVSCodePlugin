@@ -1,16 +1,15 @@
 import * as vscode from 'vscode';
 import {Position, Range} from "vscode";
 import {SpawnOptions} from "child_process";
-import {JsonTools} from "./tools/JsonTools";
 import {StreamReader} from "./StreamReader";
 import {ReadLineResponse} from "./data/ReadLineResponse";
 import {TimedReader} from "./TimedReader";
 import {Constants} from "./Constants";
 import {NotificationTools} from "./tools/NotificationTools";
-import {Tools} from "./tools/Tools";
 import {logDebug} from "./tools/LogTools";
 import {spawn} from "node:child_process";
 import {OsTools} from "./tools/OsTools";
+import {Process} from "./Process";
 
 let isDartFormatProcessRunning = false;
 
@@ -81,16 +80,11 @@ async function startExternalDartFormatProcess(): Promise<boolean>
     }
 
     const args = ["--web", "--errors-as-json", "--log-to-temp-file"];
-    const spawnOptions: SpawnOptions = {shell: false, stdio: "pipe"};
-
+    const spawnOptions: SpawnOptions = {shell: false /*, stdio: [Stdin, Stdout, Stderr]*/};
     logDebug("Starting external dart_format: " + externalDartFormatFilePathOrError + " " + args.join(" "));
-    const process = spawn(externalDartFormatFilePathOrError, args, spawnOptions);
+    const process = new Process ( spawn(externalDartFormatFilePathOrError, args, spawnOptions));
 
-    logDebug("process.exitCode: " + process.exitCode);
-    logDebug("process.pid: " + process.pid);
-    logDebug("process: " + JsonTools.stringify(process));
-
-    if (!process.pid   || !process.stdout  || !process.stderr )
+    if (!process.isAlive())
     {
         const title = "Failed to start external dart_format: ?";
         const content = "Did you install the dart_format package?\n" +
@@ -102,25 +96,34 @@ async function startExternalDartFormatProcess(): Promise<boolean>
 
     NotificationTools.notifyInfo("External dart_format process is alive.\nWaiting for connection details ...");
 
-    const processStdOutReader = new StreamReader(process.stdout);
-    const processStdErrReader = new StreamReader(process.stderr);
-    let readLineResponse: ReadLineResponse | undefined
+    const processStdOutReader = new StreamReader(process.stdOut, "stdout");
+    const processStdErrReader = new StreamReader(process.stdErr, "stderr");
+    let readLineResponse: ReadLineResponse | undefined;
+
 
     while (true)
     {
-        readLineResponse = await TimedReader.readLine(process, processStdOutReader, processStdErrReader, Constants.WAIT_FOR_EXTERNAL_DART_FORMAT_START_IN_SECONDS, "connection details from external dart_format")
+        readLineResponse = await TimedReader.readLine(process, processStdOutReader, processStdErrReader, Constants.WAIT_FOR_EXTERNAL_DART_FORMAT_START_IN_SECONDS, "connection details from external dart_format");
         if (readLineResponse === undefined)
-            break;
-
-        if (readLineResponse.stdErr  )
-            break;
-
-        if (readLineResponse.stdOut  )
         {
-            if (readLineResponse.stdOut .startsWith("{"))
+            break;
+        }
+
+        if (readLineResponse.stdErr)
+        {
+            break;
+        }
+
+        if (readLineResponse.stdOut)
+        {
+            if (readLineResponse.stdOut.startsWith("{"))
+            {
                 break;
+            }
             else
-                logDebug("Unexpected plain text: " + readLineResponse.stdOut)
+            {
+                logDebug("Unexpected plain text: " + readLineResponse.stdOut);
+            }
         }
     }
 

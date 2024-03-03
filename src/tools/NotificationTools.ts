@@ -10,7 +10,7 @@ export class NotificationTools
 
     static notifyError(message: string, content: string, actions: LinkInfo[]): void
     {
-        // JSIgnoredPromiseFromCall
+        // noinspection JSIgnoredPromiseFromCall
         this.notifyErrorAsync(message, content, actions);
     }
 
