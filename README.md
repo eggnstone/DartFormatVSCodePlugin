@@ -4,7 +4,7 @@
 
 Like dartfmt.  
 But better ;)  
-Because it's configurable.
+(Because it's configurable. (coming soon))
 
 Press `Ctrl`+`Alt`+`,` to format your code.
 

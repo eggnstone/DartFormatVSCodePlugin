@@ -4,6 +4,10 @@ import {logDebug, Tools} from "./tools/Tools";
 import {ChildProcess, spawn} from "node:child_process";
 import {SpawnOptions} from "child_process";
 import {JsonTools} from "./tools/JsonTools";
+import {StreamReader} from "./StreamReader";
+import {ReadLineResponse} from "./data/ReadLineResponse";
+import {TimedReader} from "./TimedReader";
+import {Constants} from "./Constants";
 
 let isDartFormatProcessRunning = false;
 
@@ -77,13 +81,13 @@ async function startExternalDartFormatProcess(): Promise<boolean>
     const spawnOptions: SpawnOptions = {shell: false, stdio: "pipe"};
 
     logDebug("Starting external dart_format: " + externalDartFormatFilePathOrError + " " + args.join(" "));
-    const process = spawn(externalDartFormatFilePathOrError + "x", args, spawnOptions);
+    const process = spawn(externalDartFormatFilePathOrError, args, spawnOptions);
 
     logDebug("process.exitCode: " + process.exitCode);
     logDebug("process.pid: " + process.pid);
     logDebug("process: " + JsonTools.stringify(process));
 
-    if (process.pid === undefined)
+    if (process.pid === undefined || process.stdout === null || process.stderr === null)
     {
         const title = "Failed to start external dart_format: ?";
         const content = "Did you install the dart_format package?\n" +
@@ -93,9 +97,30 @@ async function startExternalDartFormatProcess(): Promise<boolean>
         return false;
     }
 
-    /*
+    Tools.showInfo("External dart_format process is alive.\nWaiting for connection details ...");
 
-     */
+    const processStdOutReader = new StreamReader(process.stdout);
+    const processStdErrReader = new StreamReader(process.stderr);
+    let readLineResponse: ReadLineResponse | undefined
+
+    while (true)
+    {
+        readLineResponse = TimedReader.readLine(process, inputStreamReader, errorStreamReader, Constants.WAIT_FOR_EXTERNAL_DART_FORMAT_START_IN_SECONDS, "connection details from external dart_format")
+        if ("readLineResponse  )
+            break
+
+        if (readLineResponse.stdErr  )
+            break
+
+        if (readLineResponse.stdOut  )
+        {
+            if (readLineResponse.stdOut .startsWith("{"))
+                break;
+            else
+                logDebug("Unexpected plain text: " + readLineResponse.stdOut)
+        }
+    }
+
     //isDartFormatProcessRunning = true;
     return true;
 }

@@ -20,7 +20,7 @@
       }
     ]
   },
-  "description": "A formatter for Dart. Like dartfmt. But better ;) Because it's configurable.",
+  "description": "A formatter for Dart. Like dartfmt. But better ;) (Because it's configurable. (coming soon))",
   "devDependencies": {
     "@types/vscode": "^1.87.0",
     "@types/mocha": "^10.0.6",

@@ -7,6 +7,11 @@ export function logDebug(s: string): void
     Tools.logDebug(s);
 }
 
+export function logError(s: string): void
+{
+    Tools.logError(s);
+}
+
 export class Tools
 {
     static debugOutputChannel = vscode.window.createOutputChannel("DartFormat");
@@ -77,6 +82,16 @@ export class Tools
     static logDebug(s: string): void
     {
         Tools.debugOutputChannel.appendLine(s);
+    }
+
+    static logError(s: string): void
+    {
+        Tools.debugOutputChannel.appendLine("ERROR: " + s);
+    }
+
+    static async sleep(millis: number): Promise<void>
+    {
+        return new Promise<void>(resolve => setTimeout(resolve, millis));
     }
 
     static showError(message: string, content: string, actions: LinkInfo[]): void
