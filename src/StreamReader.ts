@@ -53,7 +53,7 @@ export class StreamReader
 
         const c = this.buffer.charCodeAt(0);
         this.buffer = this.buffer.substring(1);
-        return c ;
+        return c;
     }
 
     available(): number

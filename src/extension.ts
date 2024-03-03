@@ -183,7 +183,12 @@ async function startExternalDartFormatProcess(): Promise<DartFormatClient | unde
         throw DartFormatError.localError("External dart_format: Requested status but got: " + httpResponse.status + " " + httpResponse.body);
     }
 
-    NotificationTools.notifyInfo("External dart_format is ready." + JsonTools.stringify(jsonResponse));
+    let message = "External dart_format is ready.";
+    if (Constants.DEBUG_CONNECTION)
+    {
+        message += " " + JsonTools.stringify0(jsonResponse);
+    }
+    NotificationTools.notifyInfo(message);
 
     if (currentVersion?.isOlderThan(latestVersion))
     {

@@ -72,7 +72,9 @@ export class TimedReader
     {
         const availableBytes = streamReader.available();
         if (availableBytes <= 0)
+        {
             return undefined;
+        }
 
         logDebug(`TimedReader.receiveLine(${name})`);
         logDebug(`  Receiving: ${availableBytes} bytes.`);
@@ -81,7 +83,7 @@ export class TimedReader
         return s;
     }
 
-      static receiveLines(streamReader: StreamReader, name: string, prefix: String): string | undefined
+    static receiveLines(streamReader: StreamReader, name: string, prefix: String): string | undefined
     {
         let r = "";
 
