@@ -81,7 +81,7 @@ export class TimedReader
         return s;
     }
 
-    private static receiveLines(streamReader: StreamReader, name: string, prefix: String): string | undefined
+      static receiveLines(streamReader: StreamReader, name: string, prefix: String): string | undefined
     {
         let r = "";
 
