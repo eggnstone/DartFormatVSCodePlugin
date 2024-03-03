@@ -12,8 +12,10 @@ import {OsTools} from "./tools/OsTools";
 import {Process} from "./Process";
 import {JsonTools} from "./tools/JsonTools";
 import {Version} from "./data/Version";
+import {DartFormatClient} from "./DartFormatClient";
+import {DartFormatError} from "./data/DartFormatException";
 
-let isDartFormatProcessRunning = false;
+let dartFormatClient: DartFormatClient | undefined;
 
 // noinspection JSUnusedGlobalSymbols
 export async function activate(context: vscode.ExtensionContext): Promise<void>
@@ -21,7 +23,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void>
     const disposable = vscode.commands.registerCommand('DartFormat.format', format);
     context.subscriptions.push(disposable);
 
-    await startExternalDartFormatProcess();
+    dartFormatClient = await startExternalDartFormatProcess();
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -39,7 +41,7 @@ async function formatText(unformattedText: string): Promise<string>
 
 async function format(): Promise<void>
 {
-    if (!isDartFormatProcessRunning)
+    if (!dartFormatClient)
     {
         NotificationTools.notifyWarning('DartFormat: External dart format process is not running.');
         return;
@@ -68,7 +70,7 @@ async function format(): Promise<void>
     NotificationTools.notifyInfo('Done formatting.');
 }
 
-async function startExternalDartFormatProcess(): Promise<boolean>
+async function startExternalDartFormatProcess(): Promise<DartFormatClient | undefined>
 {
     const externalDartFormatFilePathOrError = OsTools.getExternalDartFormatFilePathOrError();
     if (externalDartFormatFilePathOrError instanceof Error)
@@ -78,7 +80,7 @@ async function startExternalDartFormatProcess(): Promise<boolean>
             "Basically just execute this:<pre>dart pub global activate dart_format</pre>";
         const actions = [NotificationTools.createCheckInstallationInstructionsLink()];
         NotificationTools.notifyError(title, content, actions);
-        return false;
+        return undefined;
     }
 
     const args = ["--web", "--errors-as-json", "--log-to-temp-file"];
@@ -93,7 +95,7 @@ async function startExternalDartFormatProcess(): Promise<boolean>
             "Basically just execute this:<pre>dart pub global activate dart_format</pre>";
         const actions = [NotificationTools.createCheckInstallationInstructionsLink()];
         NotificationTools.notifyError(title, content, actions);
-        return false;
+        return undefined;
     }
 
     NotificationTools.notifyInfo("External dart_format process is alive.\nWaiting for connection details ...");
@@ -130,7 +132,7 @@ async function startExternalDartFormatProcess(): Promise<boolean>
 
     if (readLineResponse === undefined)
     {
-        return false;
+        return undefined;
     }
 
     const jsonEncodedResponse = readLineResponse.stdOut ?? readLineResponse.stdErr ?? "<no response>";
@@ -164,7 +166,7 @@ async function startExternalDartFormatProcess(): Promise<boolean>
         const actions = [NotificationTools.createCheckInstallationInstructionsLink()];
         // TODO: add report link?
         NotificationTools.notifyError(title, content, actions);
-        return false;
+        return undefined;
     }
 
     const baseUrl = JsonTools.getString(jsonResponse, "Message", "");
@@ -174,93 +176,85 @@ async function startExternalDartFormatProcess(): Promise<boolean>
     logDebug(`$methodName: currentVersion: ${currentVersion}`);
     logDebug(`$methodName: latestVersion:  ${latestVersion}`);
 
+    const dartFormatClient = new DartFormatClient(baseUrl);
+    const httpResponse = await dartFormatClient.get("/status");
+    if (httpResponse.status !== 200)
+    {
+        throw DartFormatError.localError("External dart_format: Requested status but got: " + httpResponse.status + " " + httpResponse.body);
+    }
+
+    NotificationTools.notifyInfo("External dart_format is ready." + JsonTools.stringify(jsonResponse));
+
+    if (currentVersion?.isOlderThan(latestVersion))
+    {
+        const title = "A new version of the dart_format package is available.";
+        const content = "<pre>Current version: " + currentVersion + "\nLatest version:  " + latestVersion + "</pre>" +
+            "Just execute this again:<pre>dart pub global activate dart_format</pre>";
+        const actions = [NotificationTools.createCheckInstallationInstructionsLink()];
+        NotificationTools.notifyInfo(title, content, actions);
+    }
+
     /*
-    dartFormatClient = DartFormatClient(baseUrl);
-       const httpResponse = dartFormatClient!!.get("/status")
-       if (httpResponse.statusCode() != 200)
-           throw Exception("External dart_format: Requested status but got: ${httpResponse.statusCode()} ${httpResponse.body()}")
+    while (true)
+    {
+        const formatJob = channel.receive()
+        Logger.logDebug("$methodName: Got new job: ${formatJob.command}")
+        lastVirtualFile =  formatJob.virtualFile
 
-       NotificationTools.notifyInfo(NotificationInfo(
-           content = null,
-           links = null,
-           origin = null,
-           project = null,
-           title = "External dart_format is ready." + jsonResponse,
-           virtualFile = null
-       ))
-       */
+        if (!process.isAlive)
+        {
+            // TODO: fix
+            if (!alreadyNotifiedAboutExternalDartFormatProcessDeath)
+            {
+                alreadyNotifiedAboutExternalDartFormatProcessDeath = true
+                const title = "External dart_format process died."
+                const reportErrorLink = NotificationTools.createReportErrorLink(
+                    content = null,
+                    gitHubRepo = Constants.REPO_NAME_DART_FORMAT_JET_BRAINS_PLUGIN,
+                    origin = null,
+                    stackTrace = null,
+                    title = title
+                )
+                NotificationTools.notifyError(NotificationInfo(
+                    content = null,
+                    listOf(reportErrorLink),
+                    origin = null,
+                    project = null,
+                    title = title,
+                    virtualFile = null
+                ))
+            }
+        }
 
-       if (currentVersion?.isOlderThan(latestVersion) )
-       {
-           const title = "A new version of the dart_format package is available.";
-           const content = "<pre>Current version: $currentVersion\nLatest version:  $latestVersion</pre>" +
-               "Just execute this again:<pre>dart pub global activate dart_format</pre>";
-           const actions = [NotificationTools.createCheckInstallationInstructionsLink()];
-           NotificationTools.notifyInfo(title, content, actions);
-       }
+        if (formatJob.command.toLowerCasePreservingASCIIRules() == "format")
+        {
+            Logger.logDebug("Calling format()")
+            formatJob.formatResult = formatViaExternalDartFormat(config = formatJob.config, inputText = formatJob.inputText!!)
+            Logger.logDebug("Called format()")
+            Logger.logDebug("Calling formatJob.complete() 1")
+            formatJob.complete()
+            Logger.logDebug("Called formatJob.complete() 1")
+            continue
+        }
 
-       /*
-       while (true)
-       {
-           const formatJob = channel.receive()
-           Logger.logDebug("$methodName: Got new job: ${formatJob.command}")
-           lastVirtualFile =  formatJob.virtualFile
+        if (formatJob.command.toLowerCasePreservingASCIIRules() == "quit")
+        {
+            Logger.logDebug("Calling quit()")
+            formatJob.formatResult = quitExternalDartFormat()
+            Logger.logDebug("Called quit()")
+            Logger.logDebug("Calling formatJob.complete() 2")
+            formatJob.complete()
+            Logger.logDebug("Called formatJob.complete() 2")
+            break
+        }
 
-           if (!process.isAlive)
-           {
-               // TODO: fix
-               if (!alreadyNotifiedAboutExternalDartFormatProcessDeath)
-               {
-                   alreadyNotifiedAboutExternalDartFormatProcessDeath = true
-                   const title = "External dart_format process died."
-                   const reportErrorLink = NotificationTools.createReportErrorLink(
-                       content = null,
-                       gitHubRepo = Constants.REPO_NAME_DART_FORMAT_JET_BRAINS_PLUGIN,
-                       origin = null,
-                       stackTrace = null,
-                       title = title
-                   )
-                   NotificationTools.notifyError(NotificationInfo(
-                       content = null,
-                       listOf(reportErrorLink),
-                       origin = null,
-                       project = null,
-                       title = title,
-                       virtualFile = null
-                   ))
-               }
-           }
+        formatJob.formatResult = FormatResult.error("Unknown command: ${formatJob.command}")
+        formatJob.complete()
+    }
 
-           if (formatJob.command.toLowerCasePreservingASCIIRules() == "format")
-           {
-               Logger.logDebug("Calling format()")
-               formatJob.formatResult = formatViaExternalDartFormat(config = formatJob.config!!, inputText = formatJob.inputText!!)
-               Logger.logDebug("Called format()")
-               Logger.logDebug("Calling formatJob.complete() 1")
-               formatJob.complete()
-               Logger.logDebug("Called formatJob.complete() 1")
-               continue
-           }
-
-           if (formatJob.command.toLowerCasePreservingASCIIRules() == "quit")
-           {
-               Logger.logDebug("Calling quit()")
-               formatJob.formatResult = quitExternalDartFormat()
-               Logger.logDebug("Called quit()")
-               Logger.logDebug("Calling formatJob.complete() 2")
-               formatJob.complete()
-               Logger.logDebug("Called formatJob.complete() 2")
-               break
-           }
-
-           formatJob.formatResult = FormatResult.error("Unknown command: ${formatJob.command}")
-           formatJob.complete()
-       }
-
-       Logger.logDebug("$methodName: END")
+    Logger.logDebug(methodName+": END")
 */
 
-    //isDartFormatProcessRunning = true;
-    return true;
+    return dartFormatClient;
 }
 

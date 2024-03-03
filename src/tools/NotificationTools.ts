@@ -1,6 +1,7 @@
 import vscode from "vscode";
 import {LinkInfo} from "../data/LinkInfo";
 import {NotificationType} from "../enums/NotificationType";
+import {logDebug} from "./LogTools";
 
 export class NotificationTools
 {
@@ -51,7 +52,7 @@ export class NotificationTools
                 break;
         }
 
-        NotificationTools.notifyInfo("TODO: linkInfoName: " + linkInfoName);
+        logDebug("linkInfoName: " + linkInfoName);
         if (!linkInfoName)
         {
             return;
