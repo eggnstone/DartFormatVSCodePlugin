@@ -6,6 +6,7 @@ export class Constants
 
     static readonly DEBUG_CONNECTION = Constants.DEBUG && true;
     static readonly DEBUG_FORMAT_ACTION = Constants.DEBUG && true;
+    static readonly DEBUG_JSON_TOOLS = Constants.DEBUG && false;
     static readonly DEBUG_NOTIFICATION_TOOLS = Constants.DEBUG && true;
     static readonly DEBUG_SETTINGS_DIALOG = Constants.DEBUG && true;
 

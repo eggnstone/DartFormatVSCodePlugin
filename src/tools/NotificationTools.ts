@@ -52,12 +52,12 @@ export class NotificationTools
                 break;
         }
 
-        logDebug("linkInfoName: " + linkInfoName);
         if (!linkInfoName)
         {
             return;
         }
 
+        logDebug("linkInfoName: " + linkInfoName);
         const linkInfo = actions?.find((linkInfo: LinkInfo) => linkInfo.name === linkInfoName);
         if (linkInfo)
         {

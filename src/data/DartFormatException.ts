@@ -1,12 +1,13 @@
 import {FailType} from "../enums/FailType";
 import {ExceptionSourceType} from "../enums/ExceptionSourceType";
+import {JsonTools} from "../tools/JsonTools";
 
 export class DartFormatError extends Error
 {
-    private readonly type: FailType;
-    private readonly source: ExceptionSourceType;
-    private readonly line: number | undefined;
-    private readonly column: number | undefined;
+    readonly type: FailType;
+    readonly source: ExceptionSourceType;
+    readonly line: number | undefined;
+    readonly column: number | undefined;
 
     constructor(
         type: FailType,
@@ -29,5 +30,17 @@ export class DartFormatError extends Error
     static localError(message: string, cause?: Error | undefined, line?: number, column?: number): DartFormatError
     {
         return new DartFormatError(FailType.Error, ExceptionSourceType.Local, message, cause, line, column);
+    }
+
+    static fromJson(json: string): DartFormatError
+    {
+        return new DartFormatError(
+            JsonTools.getOrUndefined(json, "Type") === "Warning" ? FailType.Warning : FailType.Error,
+            ExceptionSourceType.Remote,
+            JsonTools.getOrUndefined(json, "Message") ?? "",
+            undefined,
+            JsonTools.getOrUndefined(json, "Line"),
+            JsonTools.getOrUndefined(json, "Column")
+        );
     }
 }

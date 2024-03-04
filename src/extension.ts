@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
-import {Position, Range} from "vscode";
+import {Position, Range} from 'vscode';
 import {SpawnOptions} from "child_process";
 import {StreamReader} from "./StreamReader";
 import {ReadLineResponse} from "./data/ReadLineResponse";
 import {TimedReader} from "./TimedReader";
 import {Constants} from "./Constants";
 import {NotificationTools} from "./tools/NotificationTools";
-import {logDebug} from "./tools/LogTools";
+import {logDebug, logError} from "./tools/LogTools";
 import {spawn} from "node:child_process";
 import {OsTools} from "./tools/OsTools";
 import {Process} from "./Process";
@@ -14,6 +14,9 @@ import {JsonTools} from "./tools/JsonTools";
 import {Version} from "./data/Version";
 import {DartFormatClient} from "./DartFormatClient";
 import {DartFormatError} from "./data/DartFormatException";
+import {FormData2} from "./FormData";
+import {StringTools} from "./tools/StringTools";
+import {FailType} from "./enums/FailType";
 
 let externalDartFormatProcess: Process | undefined;
 let dartFormatClient: DartFormatClient | undefined;
@@ -35,16 +38,59 @@ export async function deactivate(): Promise<void>
     NotificationTools.notifyInfo('DartFormat is stopped.');
 }
 
-async function formatText(unformattedText: string): Promise<string>
+async function formatText(unformattedText: string): Promise<string | undefined>
 {
     if (!dartFormatClient)
+        return undefined;
+
+    logDebug("formatText:");
+    const formData = new FormData2();
+    formData.append("Config", "");//"{\"AddNewLineAfterOpeningBrace\":true}");
+    formData.append("Text", unformattedText);
+    const response = await dartFormatClient.post("/format", formData);
+    logDebug("  response.status:     " + response.status);
+    logDebug("  response.statusText: " + response.statusText);
+    response.headers.forEach((value, name) => logDebug("  header: " + name + ": " + value));
+    if (!response.body)
     {
-        return unformattedText;
+        logError('  response.body is undefined.');
+        return undefined;
     }
 
-    const response = await dartFormatClient.post("/format", unformattedText);
+    const dartFormatResult = response.headers.get("x-dartformat-result");
+    if (dartFormatResult !== "OK")
+    {
+        const dartFormatExceptionJsonString = response.headers.get("x-dartformat-exception") ?? "Unknown error.";
+        logError('dartFormatResult: ' + dartFormatResult);
+        logError('dartFormatExceptionJsonString: ' + dartFormatExceptionJsonString);
+        const dartFormatExceptionJson = JSON.parse(dartFormatExceptionJsonString);
+        logError('dartFormatExceptionJson: ' + dartFormatExceptionJson);
+        const dartFormatError = DartFormatError.fromJson(dartFormatExceptionJson);
+        logError('dartFormatError: ' + dartFormatError);
+        logError('dartFormatError.message: ' + dartFormatError.message);
+        logError('dartFormatError.type: ' + dartFormatError.type);
+        logError('dartFormatError.line: ' + dartFormatError.line);
+        logError('dartFormatError.column: ' + dartFormatError.column);
 
-    return "/* TODO */\n" + unformattedText;
+        let title = "Format failed";
+        const message = dartFormatError.message;
+        title += (dartFormatError.line !== undefined && dartFormatError.column !== undefined)
+            ? ` at ${dartFormatError.line}:${dartFormatError.column}.`
+            : ".";
+
+        if (dartFormatError.type === FailType.Warning)
+            NotificationTools.notifyWarning(title, message);
+        else
+            NotificationTools.notifyError(title, message);
+
+        return undefined;
+    }
+
+    const result = await response.body.getReader().read();
+    const formattedText = new TextDecoder().decode(result.value);
+    logDebug("  formattedText: " + StringTools.toDisplayString(formattedText, 100));
+
+    return formattedText;
 }
 
 async function format(): Promise<void>
@@ -73,11 +119,13 @@ async function format(): Promise<void>
     const document = editor.document;
     const unformattedText = document.getText();
     const formattedText = await formatText(unformattedText);
+    if (!formattedText)
+        return;
 
     await editor.edit((editBuilder) =>
     {
         const startPos = new Position(0, 0);
-        const endPos = document.positionAt(unformattedText.length - 1);
+        const endPos = document.positionAt(unformattedText.length);// - 1);
         editBuilder.replace(new Range(startPos, endPos), formattedText);
     });
 
@@ -122,32 +170,22 @@ async function startExternalDartFormatProcess(): Promise<boolean>
     {
         readLineResponse = await TimedReader.readLine(externalDartFormatProcess, processStdOutReader, processStdErrReader, Constants.WAIT_FOR_EXTERNAL_DART_FORMAT_START_IN_SECONDS, "connection details from external dart_format");
         if (readLineResponse === undefined)
-        {
             break;
-        }
 
         if (readLineResponse.stdErr)
-        {
             break;
-        }
 
         if (readLineResponse.stdOut)
         {
             if (readLineResponse.stdOut.startsWith("{"))
-            {
                 break;
-            }
-            else
-            {
-                logDebug("Unexpected plain text: " + readLineResponse.stdOut);
-            }
+
+            logDebug("Unexpected plain text: " + readLineResponse.stdOut);
         }
     }
 
     if (readLineResponse === undefined)
-    {
         return false;
-    }
 
     const jsonEncodedResponse = readLineResponse.stdOut ?? readLineResponse.stdErr ?? "<no response>";
     const jsonResponse = JsonTools.parseOrUndefined(jsonEncodedResponse);
@@ -158,21 +196,17 @@ async function startExternalDartFormatProcess(): Promise<boolean>
 
         let content = "";
         if (readLineResponse.stdOut)
-        {
             content += "\nStdOut: ${readLineResponse.stdOut}";
-        }
+
         content += TimedReader.receiveLines(processStdOutReader, "stdout", "\nStdOut: ") ?? "";
         if (readLineResponse.stdErr)
-        {
             content += "\nStdErr: ${readLineResponse.stdErr}";
-        }
+
         content += TimedReader.receiveLines(processStdErrReader, "stderr", "\nStdErr: ") ?? "";
         content = content.trim();
 
         if (content)
-        {
             content += "\n";
-        }
 
         content += "Did you install the dart_format package?\n" +
             "Basically just execute this:<pre>dart pub global activate dart_format</pre>";
@@ -186,22 +220,19 @@ async function startExternalDartFormatProcess(): Promise<boolean>
     const baseUrl = JsonTools.getString(jsonResponse, "Message", "");
     const currentVersion = Version.parseOrUndefined(JsonTools.getString(jsonResponse, "CurrentVersion", ""));
     const latestVersion = Version.parseOrUndefined(JsonTools.getString(jsonResponse, "LatestVersion", ""));
-    logDebug(`$methodName: baseUrl:        ${baseUrl}`);
-    logDebug(`$methodName: currentVersion: ${currentVersion}`);
-    logDebug(`$methodName: latestVersion:  ${latestVersion}`);
+    //logDebug(`$methodName: baseUrl:        ${baseUrl}`);
+    //logDebug(`$methodName: currentVersion: ${currentVersion}`);
+    //logDebug(`$methodName: latestVersion:  ${latestVersion}`);
 
     dartFormatClient = new DartFormatClient(baseUrl);
     const httpResponse = await dartFormatClient.get("/status");
     if (httpResponse.status !== 200)
-    {
         throw DartFormatError.localError("External dart_format: Requested status but got: " + httpResponse.status + " " + httpResponse.body);
-    }
 
     let message = "External dart_format is ready.";
     if (Constants.DEBUG_CONNECTION)
-    {
         message += " " + JsonTools.stringify0(jsonResponse);
-    }
+
     NotificationTools.notifyInfo(message);
 
     if (currentVersion?.isOlderThan(latestVersion))

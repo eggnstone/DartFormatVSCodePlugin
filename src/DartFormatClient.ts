@@ -1,4 +1,6 @@
 import {logDebug} from "./tools/LogTools";
+import {FormData2} from "./FormData";
+import {JsonTools} from "./tools/JsonTools";
 
 export class DartFormatClient
 {
@@ -25,20 +27,10 @@ export class DartFormatClient
         return fetch(url, options);
     }
 
-    async post(path: String, entity?: string): Promise<Response>
+    async post(path: String, formData: FormData2): Promise<Response>
     {
         const url = `${this.baseUrl}${path}`;
-        const options =
-            {
-                method: "POST",
-                headers:
-                    {
-                        "User-Agent": "DartFormatPlugin",
-                        "Content-Type": "text/plain; charset=utf-8"
-                    }
-            };
-
-        //httpRequest.entity = entity;
+        const options = formData.generate();
 
         const startTime = new Date();
         const response = await fetch(url, options);
