@@ -49,5 +49,5 @@
     "lint": "eslint src --ext ts",
     "test": "vscode-test"
   },
-  "version": "0.0.12"
+  "version": "0.1.0"
 }
