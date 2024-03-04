@@ -16,7 +16,7 @@ export class TimedReader
     static async readLine(process: Process, stdOutReader: StreamReader, stdErrReader: StreamReader, timeoutInSeconds: number, waitForName: String): Promise<ReadLineResponse | undefined>
     {
         const METHOD_NAME = TimedReader.CLASS_NAME + ".readLine";
-        logDebug(METHOD_NAME + "()");
+        if (Constants.DEBUG_TIMED_READER) logDebug(METHOD_NAME + "()");
 
         let waitedMillis = 0;
         while (timeoutInSeconds < 0 || waitedMillis < timeoutInSeconds * 1000)
@@ -61,7 +61,7 @@ export class TimedReader
             waitedMillis += Constants.WAIT_INTERVAL_IN_MILLIS;
         }
 
-        logDebug(`${METHOD_NAME}: waitedMillis: ${waitedMillis}`);
+        if (Constants.DEBUG_TIMED_READER) logDebug(`${METHOD_NAME}: waitedMillis: ${waitedMillis}`);
 
         const errorText = "Timeout while waiting for response.";
         logError(`${METHOD_NAME}: ${errorText}`);
@@ -76,10 +76,10 @@ export class TimedReader
             return undefined;
         }
 
-        logDebug(`TimedReader.receiveLine(${name})`);
-        logDebug(`  Receiving: ${availableBytes} bytes.`);
+        if (Constants.DEBUG_TIMED_READER) logDebug(`TimedReader.receiveLine(${name})`);
+        if (Constants.DEBUG_TIMED_READER) logDebug(`  Receiving: ${availableBytes} bytes.`);
         const s = streamReader.readLine();
-        logDebug(`  Received: ${StringTools.toDisplayString(s)}.`);
+        if (Constants.DEBUG_TIMED_READER) logDebug(`  Received: ${StringTools.toDisplayString(s)}.`);
         return s;
     }
 
@@ -95,7 +95,7 @@ export class TimedReader
                 break;
             }
 
-            logDebug(`TimedReader.receiveLines: Received: ${StringTools.toDisplayString(s)}.`);
+            if (Constants.DEBUG_TIMED_READER) logDebug(`TimedReader.receiveLines: Received: ${StringTools.toDisplayString(s)}.`);
             r += prefix + s;
         }
 

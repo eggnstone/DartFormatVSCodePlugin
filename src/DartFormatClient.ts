@@ -32,12 +32,13 @@ export class DartFormatClient
         const url = `${this.baseUrl}${path}`;
         const options = formData.generate();
 
-        const startTime = new Date();
+        //const startTime = new Date();
+        // noinspection UnnecessaryLocalVariableJS
         const response = await fetch(url, options);
-        const endTime = new Date();
+        /*const endTime = new Date();
         const diffTime = endTime.getTime() - startTime.getTime();
         const diffTimeText = (diffTime < 1000) ? `${diffTime} ms` : `${diffTime / 1000.0} s`;
-        logDebug("fetch took " + diffTimeText);
+        logDebug("fetch took " + diffTimeText);*/
 
         return response;
     }

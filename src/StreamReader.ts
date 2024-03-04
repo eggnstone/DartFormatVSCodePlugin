@@ -1,6 +1,7 @@
 import {Readable} from "node:stream";
 import {logDebug} from "./tools/LogTools";
 import {StringTools} from "./tools/StringTools";
+import {Constants} from "./Constants";
 
 export class StreamReader
 {
@@ -12,21 +13,21 @@ export class StreamReader
     {
         inputStream.on("data", (data) =>
         {
-            logDebug(`StreamReader(${name}).onData(${StringTools.toDisplayString(data)})`);
+            if (Constants.DEBUG_TIMED_READER) logDebug(`StreamReader(${name}).onData(${StringTools.toDisplayString(data)})`);
             this.buffer += data.toString();
         });
     }
 
     readLine(): string
     {
-        logDebug("StreamReader.readLine()");
+        if (Constants.DEBUG_TIMED_READER) logDebug("StreamReader.readLine()");
 
         let s = "";
 
         while (true)
         {
             const c = this.read();
-            //logDebug("StreamReader.readLine() c: " + c);
+            //if (Constants.DEBUG_TIMED_READER) logDebug("StreamReader.readLine() c: " + c);
 
             if (c === -1)
             {

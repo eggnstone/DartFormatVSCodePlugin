@@ -1,14 +1,16 @@
 export class Constants
 {
-    private static readonly DEBUG = true;
+    private static readonly DEBUG = false;
 
     static readonly CANCEL_PROCESSING_ON_ERROR = !Constants.DEBUG;
 
-    static readonly DEBUG_CONNECTION = Constants.DEBUG && true;
-    static readonly DEBUG_FORMAT_ACTION = Constants.DEBUG && true;
+    static readonly DEBUG_CONNECTION = Constants.DEBUG && false;
+    static readonly DEBUG_FORMAT_ACTION = Constants.DEBUG && false;
     static readonly DEBUG_JSON_TOOLS = Constants.DEBUG && false;
-    static readonly DEBUG_NOTIFICATION_TOOLS = Constants.DEBUG && true;
-    static readonly DEBUG_SETTINGS_DIALOG = Constants.DEBUG && true;
+    static readonly DEBUG_NOTIFICATION_TOOLS = Constants.DEBUG && false;
+    static readonly DEBUG_SETTINGS_DIALOG = Constants.DEBUG && false;
+    static readonly DEBUG_STREAM_READER = Constants.DEBUG && false;
+    static readonly DEBUG_TIMED_READER = Constants.DEBUG && false;
 
     static readonly HTTP_CLIENT_CONNECT_TIMEOUT_IN_SECONDS = 5;
     static readonly HTTP_CLIENT_CONNECTION_REQUEST_TIMEOUT_IN_SECONDS = 5;

@@ -15,7 +15,6 @@ import {Version} from "./data/Version";
 import {DartFormatClient} from "./DartFormatClient";
 import {DartFormatError} from "./data/DartFormatException";
 import {FormData2} from "./FormData";
-import {StringTools} from "./tools/StringTools";
 import {FailType} from "./enums/FailType";
 
 let externalDartFormatProcess: Process | undefined;
@@ -43,14 +42,14 @@ async function formatText(unformattedText: string): Promise<string | undefined>
     if (!dartFormatClient)
         return undefined;
 
-    logDebug("formatText:");
+    //logDebug("formatText:");
     const formData = new FormData2();
     formData.append("Config", "");//"{\"AddNewLineAfterOpeningBrace\":true}");
     formData.append("Text", unformattedText);
     const response = await dartFormatClient.post("/format", formData);
-    logDebug("  response.status:     " + response.status);
-    logDebug("  response.statusText: " + response.statusText);
-    response.headers.forEach((value, name) => logDebug("  header: " + name + ": " + value));
+    //logDebug("  response.status:     " + response.status);
+    //logDebug("  response.statusText: " + response.statusText);
+    //response.headers.forEach((value, name) => logDebug("  header: " + name + ": " + value));
     if (!response.body)
     {
         logError('  response.body is undefined.');
@@ -61,16 +60,16 @@ async function formatText(unformattedText: string): Promise<string | undefined>
     if (dartFormatResult !== "OK")
     {
         const dartFormatExceptionJsonString = response.headers.get("x-dartformat-exception") ?? "Unknown error.";
-        logError('dartFormatResult: ' + dartFormatResult);
-        logError('dartFormatExceptionJsonString: ' + dartFormatExceptionJsonString);
+        //logDebug('dartFormatResult: ' + dartFormatResult);
+        //logDebug('dartFormatExceptionJsonString: ' + dartFormatExceptionJsonString);
         const dartFormatExceptionJson = JSON.parse(dartFormatExceptionJsonString);
-        logError('dartFormatExceptionJson: ' + dartFormatExceptionJson);
+        //logDebug('dartFormatExceptionJson: ' + dartFormatExceptionJson);
         const dartFormatError = DartFormatError.fromJson(dartFormatExceptionJson);
-        logError('dartFormatError: ' + dartFormatError);
-        logError('dartFormatError.message: ' + dartFormatError.message);
-        logError('dartFormatError.type: ' + dartFormatError.type);
-        logError('dartFormatError.line: ' + dartFormatError.line);
-        logError('dartFormatError.column: ' + dartFormatError.column);
+        //logDebug('dartFormatError: ' + dartFormatError);
+        //logDebug('dartFormatError.message: ' + dartFormatError.message);
+        //logDebug('dartFormatError.type: ' + dartFormatError.type);
+        //logDebug('dartFormatError.line: ' + dartFormatError.line);
+        //logDebug('dartFormatError.column: ' + dartFormatError.column);
 
         let title = "Format failed";
         const message = dartFormatError.message;
@@ -87,8 +86,10 @@ async function formatText(unformattedText: string): Promise<string | undefined>
     }
 
     const result = await response.body.getReader().read();
+
+    // noinspection UnnecessaryLocalVariableJS
     const formattedText = new TextDecoder().decode(result.value);
-    logDebug("  formattedText: " + StringTools.toDisplayString(formattedText, 100));
+    //logDebug("  formattedText: " + StringTools.toDisplayString(formattedText, 100));
 
     return formattedText;
 }
@@ -114,11 +115,18 @@ async function format(): Promise<void>
         return;
     }
 
-    NotificationTools.notifyInfo('Formatting ...');
+    //NotificationTools.notifyInfo('Formatting ...');
 
     const document = editor.document;
     const unformattedText = document.getText();
+
+    const startTime = new Date();
     const formattedText = await formatText(unformattedText);
+    const endTime = new Date();
+    const diffTime = endTime.getTime() - startTime.getTime();
+    const diffTimeText = (diffTime < 1000) ? `${diffTime} ms` : `${diffTime / 1000.0} s`;
+    logDebug("formatText took " + diffTimeText);
+
     if (!formattedText)
         return;
 
@@ -129,7 +137,9 @@ async function format(): Promise<void>
         editBuilder.replace(new Range(startPos, endPos), formattedText);
     });
 
-    NotificationTools.notifyInfo('Done formatting.');
+    const title = `Formatting took ${diffTimeText}.`;
+    const content = formattedText === unformattedText ? "Nothing changed." : "";
+    NotificationTools.notifyInfo(title, content);
 }
 
 async function startExternalDartFormatProcess(): Promise<boolean>
@@ -220,9 +230,9 @@ async function startExternalDartFormatProcess(): Promise<boolean>
     const baseUrl = JsonTools.getString(jsonResponse, "Message", "");
     const currentVersion = Version.parseOrUndefined(JsonTools.getString(jsonResponse, "CurrentVersion", ""));
     const latestVersion = Version.parseOrUndefined(JsonTools.getString(jsonResponse, "LatestVersion", ""));
-    //logDebug(`$methodName: baseUrl:        ${baseUrl}`);
-    //logDebug(`$methodName: currentVersion: ${currentVersion}`);
-    //logDebug(`$methodName: latestVersion:  ${latestVersion}`);
+    logDebug(`baseUrl:        ${baseUrl}`);
+    logDebug(`currentVersion: ${currentVersion}`);
+    logDebug(`latestVersion:  ${latestVersion}`);
 
     dartFormatClient = new DartFormatClient(baseUrl);
     const httpResponse = await dartFormatClient.get("/status");
