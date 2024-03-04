@@ -60,18 +60,10 @@ async function formatText(unformattedText: string): Promise<string | undefined>
     if (dartFormatResult !== "OK")
     {
         const dartFormatExceptionJsonString = response.headers.get("x-dartformat-exception") ?? "Unknown error.";
-        //logDebug('dartFormatResult: ' + dartFormatResult);
-        //logDebug('dartFormatExceptionJsonString: ' + dartFormatExceptionJsonString);
         const dartFormatExceptionJson = JSON.parse(dartFormatExceptionJsonString);
-        //logDebug('dartFormatExceptionJson: ' + dartFormatExceptionJson);
         const dartFormatError = DartFormatError.fromJson(dartFormatExceptionJson);
-        //logDebug('dartFormatError: ' + dartFormatError);
-        //logDebug('dartFormatError.message: ' + dartFormatError.message);
-        //logDebug('dartFormatError.type: ' + dartFormatError.type);
-        //logDebug('dartFormatError.line: ' + dartFormatError.line);
-        //logDebug('dartFormatError.column: ' + dartFormatError.column);
 
-        let title = "Format failed";
+        let title = "Formatting failed";
         const message = dartFormatError.message;
         title += (dartFormatError.line !== undefined && dartFormatError.column !== undefined)
             ? ` at ${dartFormatError.line}:${dartFormatError.column}.`
