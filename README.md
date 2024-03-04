@@ -15,7 +15,8 @@ Basically just call this from the command line:
 
 **Beta version!**  
 Formatting the currently selected file already works.  
-Formatting multiple files comes soon.
+Formatting multiple files comes soon.  
+Configuring the formatter comes soon.  
 
 Also available as a plugin for JetBrains (Android Studio, IntelliJ IDEA, ...)  
 [DartFormat plugin at the JetBrains Marketplace](https://plugins.jetbrains.com/plugin/21003-dartformat)
