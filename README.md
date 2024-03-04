@@ -8,9 +8,14 @@ But better ;)
 
 Press `Ctrl`+`Alt`+`,` to format your code.
 
-(coming soon)
+**Please note!**  
+You have to install the [dart_format](https://pub.dev/packages/dart_format) package on [pub.dev](https://pub.dev) package to use this plugin!  
+Basically just call this from the command line:  
+`dart pub global activate dart_format`
 
-In the meantime, please check out the following resources:
+**Beta version!**  
+Formatting the currently selected file already works.  
+Formatting multiple files comes soon.
 
-* [dart_format](https://pub.dev/packages/dart_format) package on [pub.dev](https://pub.dev).
-* [DartFormat plugin for JetBrains (Android Studio, IntelliJ IDEA, ...)](https://plugins.jetbrains.com/plugin/21003-dartformat).
+Also available as a plugin for JetBrains (Android Studio, IntelliJ IDEA, ...)  
+[DartFormat plugin in the JetBrains Marketplace](https://plugins.jetbrains.com/plugin/21003-dartformat)
