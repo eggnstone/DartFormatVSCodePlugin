@@ -18,5 +18,13 @@ Formatting the currently selected file already works.
 Formatting multiple files comes soon.  
 Configuring the formatter comes soon.  
 
-Also available as a plugin for JetBrains (Android Studio, IntelliJ IDEA, ...)  
+**This extension:**  
+Source code: <a href="https://github.com/eggnstone/DartFormatVSCodePlugin">DartFormatVSCodePlugin on GitHub</a>  
+Problems and feature requests: <a href="https://github.com/eggnstone/DartFormatVSCodePlugin/issues">GitHub Issues for DartFormatVSCodePlugin</a>  
+
+**External dart_format package:**  
+Source code: <a href="https://github.com/eggnstone/dart_format/">dart_format on GitHub</a>  
+Problems and feature requests: <a href="https://github.com/eggnstone/dart_format/issues">GitHub Issues for dart_format</a>  
+
+**Also available as a plugin for JetBrains (Android Studio, IntelliJ IDEA, ...)**  
 [DartFormat plugin at the JetBrains Marketplace](https://plugins.jetbrains.com/plugin/21003-dartformat)
