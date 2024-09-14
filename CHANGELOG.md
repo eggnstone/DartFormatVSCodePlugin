@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.1.3]
+
+- Fixed startup problem (spawn EINVAL).
+
 ## [0.1.2]
 
 - Improved readme.

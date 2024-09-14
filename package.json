@@ -22,19 +22,19 @@
   },
   "description": "A formatter for Dart. Like dartfmt. But better ;) (Because it's configurable. (coming soon))",
   "devDependencies": {
-    "@types/vscode": "^1.87.0",
-    "@types/mocha": "^10.0.6",
-    "@types/node": "20.x",
-    "@typescript-eslint/eslint-plugin": "^7.2.0",
-    "@typescript-eslint/parser": "^7.2.0",
-    "eslint": "^8.57.0",
-    "typescript": "^5.4.2",
-    "@vscode/test-cli": "^0.0.8",
-    "@vscode/test-electron": "^2.3.9"
+    "@types/vscode": "^1.93.0",
+    "@types/mocha": "^10.0.8",
+    "@types/node": "22.x",
+    "@typescript-eslint/eslint-plugin": "^8.5.0",
+    "@typescript-eslint/parser": "^8.5.0",
+    "eslint": "^9.10.0",
+    "typescript": "^5.6.2",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1"
   },
   "displayName": "DartFormat",
   "engines": {
-    "vscode": "^1.87.0"
+    "vscode": "^1.93.0"
   },
   "icon": "images/DartFormat512.png",
   "main": "./out/extension.js",
@@ -49,5 +49,5 @@
     "lint": "eslint src --ext ts",
     "test": "vscode-test"
   },
-  "version": "0.1.2"
+  "version": "0.1.3"
 }

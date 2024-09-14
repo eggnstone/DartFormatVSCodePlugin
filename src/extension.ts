@@ -26,7 +26,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void>
     const disposable = vscode.commands.registerCommand('DartFormat.format', format);
     context.subscriptions.push(disposable);
 
-    await startExternalDartFormatProcess();
+    try
+    {
+        await startExternalDartFormatProcess();
+    }
+    catch (e)
+    {
+        logError(`startExternalDartFormatProcess: ${e}`);
+        NotificationTools.notifyError(`Could not start external dart_format: ${e}`);
+    }
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -148,7 +156,7 @@ async function startExternalDartFormatProcess(): Promise<boolean>
     }
 
     const args = ["--web", "--errors-as-json", "--log-to-temp-file"];
-    const spawnOptions: SpawnOptions = {shell: false /*, stdio: [Stdin, Stdout, Stderr]*/};
+    const spawnOptions: SpawnOptions = {shell: true /*, stdio: [Stdin, Stdout, Stderr]*/};
     logDebug("Starting external dart_format: " + externalDartFormatFilePathOrError + " " + args.join(" "));
     externalDartFormatProcess = new Process(spawn(externalDartFormatFilePathOrError, args, spawnOptions));
 
