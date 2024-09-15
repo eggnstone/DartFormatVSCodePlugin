@@ -11,7 +11,7 @@ export class OsTools
 
         if (OsTools.isWindows())
         {
-            logDebug("  IsWindows: true (" + process.platform + ")");
+            logDebug("  IsWindows:      true (" + process.platform + ")");
 
             const envPubCache = process.env["PUB_CACHE"];
             logDebug(`  %PUB_CACHE%:    ${envPubCache}`);
@@ -40,7 +40,7 @@ export class OsTools
         else
         {
             logDebug("  IsWindows: false (" + process.platform + ")");
-            externalDartFormatFilePath = "~/.pub-cache/bin/dart_format.sh";
+            externalDartFormatFilePath = "~/.pub-cache/bin/dart_format";
         }
 
         logDebug(`  externalDartFormatFilePath: ${externalDartFormatFilePath}`);
