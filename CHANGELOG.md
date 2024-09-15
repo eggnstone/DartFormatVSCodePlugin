@@ -2,7 +2,7 @@
 
 ## [0.3.2]
 
-- Fixing start problems on Linux/macOS.
+- Fixed startup problems on Linux/macOS.
 
 ## [0.3.0]
 
