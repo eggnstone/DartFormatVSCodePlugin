@@ -12,6 +12,74 @@
         "title": "Format Dart"
       }
     ],
+    "configuration": {
+      "properties": {
+        "dartFormat.lineBreaks.openingBraces.addBefore": {
+          "default": false,
+          "markdownDescription": "Line Breaks: Add new lines before opening braces `\\n{`",
+          "order": 0,
+          "type": "boolean"
+        },
+        "dartFormat.lineBreaks.openingBraces.addAfter": {
+          "default": false,
+          "markdownDescription": "Add new lines after opening braces `{\\n`",
+          "order": 1,
+          "type": "boolean"
+        },
+        "dartFormat.lineBreaks.closingBraces.addBefore": {
+          "default": false,
+          "markdownDescription": "Add new lines before closing braces `\\n}`",
+          "order": 3,
+          "type": "boolean"
+        },
+        "dartFormat.lineBreaks.closingBraces.addAfter": {
+          "default": false,
+          "markdownDescription": "Add new lines after closing braces `}\\n`",
+          "order": 4,
+          "type": "boolean"
+        },
+        "dartFormat.lineBreaks.semicolon.addAfter": {
+          "default": false,
+          "markdownDescription": "Add new lines after semicolons `;\\n`",
+          "order": 5,
+          "type": "boolean"
+        },
+        "dartFormat.lineBreaks.endOfFile.add": {
+          "default": false,
+          "markdownDescription": "Add a new line at the end of the file",
+          "order": 6,
+          "type": "boolean"
+        },
+        "dartFormat.spaces.fix": {
+          "default": false,
+          "markdownDescription": "Fix spaces (EXPERIMENTAL)\n\nFor example `for(int i=0;i<;10;i++)` to `for (int i = 0; i < 10; i++)`",
+          "order": 7,
+          "type": "boolean"
+        },
+        "dartFormat.removals.trailingCommas": {
+          "default": false,
+          "markdownDescription": "Remove trailing commas, e.g. `['a', 'b',]` to `['a', 'b']`",
+          "order": 8,
+          "type": "boolean"
+        },
+        "dartFormat.indentation.spacesPerLevel": {
+          "default": -1,
+          "markdownDescription": "Indent spaces (-1 means no change)",
+          "maximum": 8,
+          "minimum": -1,
+          "order": 9,
+          "type": "integer"
+        },
+        "dartFormat.emptyLines.maxAllowed": {
+          "default": -1,
+          "markdownDescription": "Max empty lines (-1 means no change)",
+          "maximum": 10,
+          "minimum": -1,
+          "order": 10,
+          "type": "integer"
+        }
+      }
+    },
     "keybindings": [
       {
         "command": "DartFormat.format",
@@ -49,5 +117,5 @@
     "lint": "eslint src --ext ts",
     "test": "vscode-test"
   },
-  "version": "0.1.3"
+  "version": "0.2.0"
 }

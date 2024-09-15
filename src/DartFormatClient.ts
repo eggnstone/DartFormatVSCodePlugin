@@ -1,5 +1,5 @@
 import {logDebug} from "./tools/LogTools";
-import {FormData2} from "./FormData";
+import {FormData} from "./FormData";
 import {JsonTools} from "./tools/JsonTools";
 
 export class DartFormatClient
@@ -27,7 +27,7 @@ export class DartFormatClient
         return fetch(url, options);
     }
 
-    async post(path: String, formData: FormData2): Promise<Response>
+    async post(path: String, formData: FormData): Promise<Response>
     {
         const url = `${this.baseUrl}${path}`;
         const options = formData.generate();

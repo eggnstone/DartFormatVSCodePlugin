@@ -53,15 +53,24 @@ export class NotificationTools
         }
 
         if (!linkInfoName)
-        {
             return;
-        }
 
         logDebug("linkInfoName: " + linkInfoName);
         const linkInfo = actions?.find((linkInfo: LinkInfo) => linkInfo.name === linkInfoName);
         if (linkInfo)
-        {
             vscode.env.openExternal(vscode.Uri.parse(linkInfo.url));
-        }
+    }
+
+    static async notifyWarningWithAction(message: string, content: string, actionTitle: string, actionCallback: () => void): Promise<void>
+    {
+        const fixedContent = content
+            .replace(/\n/g, " ")
+            .replace(/<br\/>/g, " ")
+            .replace(/<pre>/g, " ")
+            .replace(/<\/pre>/g, " ");
+
+        const chosenAction = await vscode.window.showWarningMessage<string>(message + " " + fixedContent, actionTitle);
+        if (chosenAction === actionTitle)
+            actionCallback();
     }
 }

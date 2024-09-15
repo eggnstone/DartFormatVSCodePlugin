@@ -14,8 +14,9 @@ import {JsonTools} from "./tools/JsonTools";
 import {Version} from "./data/Version";
 import {DartFormatClient} from "./DartFormatClient";
 import {DartFormatError} from "./data/DartFormatException";
-import {FormData2} from "./FormData";
+import {FormData} from "./FormData";
 import {FailType} from "./enums/FailType";
+import {Config} from "./Config";
 
 let externalDartFormatProcess: Process | undefined;
 let dartFormatClient: DartFormatClient | undefined;
@@ -23,6 +24,12 @@ let dartFormatClient: DartFormatClient | undefined;
 // noinspection JSUnusedGlobalSymbols
 export async function activate(context: vscode.ExtensionContext): Promise<void>
 {
+    if (Constants.DEBUG_STARTUP)
+    {
+        logDebug("activate START");
+        await getConfigOrWarn();
+    }
+
     const disposable = vscode.commands.registerCommand('DartFormat.format', format);
     context.subscriptions.push(disposable);
 
@@ -35,6 +42,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void>
         logError(`startExternalDartFormatProcess: ${e}`);
         NotificationTools.notifyError(`Could not start external dart_format: ${e}`);
     }
+
+    if (Constants.DEBUG_STARTUP) logDebug("activate END");
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -45,14 +54,14 @@ export async function deactivate(): Promise<void>
     NotificationTools.notifyInfo('DartFormat is stopped.');
 }
 
-async function formatText(unformattedText: string): Promise<string | undefined>
+async function formatText(unformattedText: string, config: Config): Promise<string | undefined>
 {
     if (!dartFormatClient)
         return undefined;
 
     //logDebug("formatText:");
-    const formData = new FormData2();
-    formData.append("Config", "");//"{\"AddNewLineAfterOpeningBrace\":true}");
+    const formData = new FormData();
+    formData.append("Config", config.toJsonString());
     formData.append("Text", unformattedText);
     const response = await dartFormatClient.post("/format", formData);
     //logDebug("  response.status:     " + response.status);
@@ -94,6 +103,17 @@ async function formatText(unformattedText: string): Promise<string | undefined>
     return formattedText;
 }
 
+async function getConfigOrWarn(): Promise<Config | undefined>
+{
+    const config = Config.parse(vscode.workspace.getConfiguration("dartFormat"));
+    if (config && !config.hasNothingEnabled())
+        return config;
+
+    const action = () => vscode.commands.executeCommand('workbench.action.openSettings', 'DartFormat');
+    await NotificationTools.notifyWarningWithAction("DartFormat: No formatting options set.", "", "Open settings", action);
+    return undefined;
+}
+
 async function format(): Promise<void>
 {
     if (!externalDartFormatProcess || !externalDartFormatProcess.isAlive())
@@ -115,13 +135,17 @@ async function format(): Promise<void>
         return;
     }
 
+    const config = await getConfigOrWarn();
+    if (!config)
+        return;
+
     //NotificationTools.notifyInfo('Formatting ...');
 
     const document = editor.document;
     const unformattedText = document.getText();
 
     const startTime = new Date();
-    const formattedText = await formatText(unformattedText);
+    const formattedText = await formatText(unformattedText, config);
     const endTime = new Date();
     const diffTime = endTime.getTime() - startTime.getTime();
     const diffTimeText = (diffTime < 1000) ? `${diffTime} ms` : `${diffTime / 1000.0} s`;

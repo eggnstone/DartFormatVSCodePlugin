@@ -1,6 +1,6 @@
 import {logDebug} from "./tools/LogTools";
 
-export class FormData2
+export class FormData
 {
     private parts: any = {};
 

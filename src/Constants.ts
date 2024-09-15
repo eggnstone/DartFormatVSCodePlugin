@@ -9,6 +9,7 @@ export class Constants
     static readonly DEBUG_JSON_TOOLS = Constants.DEBUG && false;
     static readonly DEBUG_NOTIFICATION_TOOLS = Constants.DEBUG && false;
     static readonly DEBUG_SETTINGS_DIALOG = Constants.DEBUG && false;
+    static readonly DEBUG_STARTUP = Constants.DEBUG && false;
     static readonly DEBUG_STREAM_READER = Constants.DEBUG && false;
     static readonly DEBUG_TIMED_READER = Constants.DEBUG && false;
 
