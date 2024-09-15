@@ -40,8 +40,13 @@ export class OsTools
         else
         {
             logDebug("  IsWindows: false (" + process.platform + ")");
+
+            const envShell = process.env["SHELL"];
+            logDebug("  $SHELL:    " + envShell);
+
             const envHome = process.env["HOME"];
             logDebug("  $HOME:     " + envHome);
+
             if (!envHome)
                 return new Error("Cannot execute dart_format: HOME environment variable is not set.");
 
