@@ -1,6 +1,10 @@
 # Change Log
 
-## [0.2.1]
+## [0.3.0]
+
+- Added install/update actions.
+
+## [0.2.2]
 
 - Added settings.
 

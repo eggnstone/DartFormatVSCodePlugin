@@ -40,7 +40,7 @@ export class Version
 
     isOlderThan(otherVersion: Version | undefined): Boolean
     {
-        //return true;
+        //if (1 == 1) return true;
 
         if (otherVersion == null)
             return false;

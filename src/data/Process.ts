@@ -52,4 +52,9 @@ export class Process
     {
         return this._isAlive;
     }
+
+    exitCode() : number | null
+    {
+        return this.childProcess.exitCode;
+    }
 }

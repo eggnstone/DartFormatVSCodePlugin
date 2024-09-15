@@ -6,9 +6,7 @@ export class ProcessTools
     static async waitFor(process: Process, waitInMillis: number): Promise<boolean>
     {
         if (!process.isAlive())
-        {
             return true;
-        }
 
         await new Promise(resolve => setTimeout(resolve, waitInMillis));
 

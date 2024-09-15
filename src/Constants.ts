@@ -24,6 +24,7 @@ export class Constants
     static readonly SHOW_TIMINGS_EVEN_AFTER_ERROR = Constants.DEBUG;
 
     static readonly WAIT_FOR_EXTERNAL_DART_FORMAT_START_IN_SECONDS = -1;
+    static readonly WAIT_FOR_EXTERNAL_INSTALL_DART_FORMAT_START_IN_SECONDS = 60;
     static readonly WAIT_FOR_JOIN_JOB_FORMAT_COMMAND_IN_SECONDS = 60;
     static readonly WAIT_FOR_SEND_JOB_FORMAT_COMMAND_IN_SECONDS = 5;
     static readonly WAIT_FOR_SEND_JOB_QUIT_COMMAND_IN_SECONDS = 5;

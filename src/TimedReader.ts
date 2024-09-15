@@ -13,7 +13,14 @@ export class TimedReader
 {
     private static readonly CLASS_NAME = "TimedReader";
 
-    static async readLine(process: Process, stdOutReader: StreamReader, stdErrReader: StreamReader, timeoutInSeconds: number, waitForName: String): Promise<ReadLineResponse | undefined>
+    static async readLine(
+        process: Process,
+        stdOutReader: StreamReader,
+        stdErrReader: StreamReader,
+        timeoutInSeconds: number,
+        waitForName: String,
+        expectProcessExit: boolean
+    ): Promise<ReadLineResponse | undefined>
     {
         const METHOD_NAME = TimedReader.CLASS_NAME + ".readLine";
         if (Constants.DEBUG_TIMED_READER) logDebug(METHOD_NAME + "()");
@@ -23,18 +30,17 @@ export class TimedReader
         {
             const textFromStdOut = TimedReader.receiveLine(stdOutReader, "stdout");
             if (textFromStdOut)
-            {
                 return new ReadLineResponse(textFromStdOut, undefined);
-            }
 
             const textFromStdErr = TimedReader.receiveLine(stdErrReader, "stderr");
             if (textFromStdErr)
-            {
                 return new ReadLineResponse(undefined, textFromStdErr);
-            }
 
             if (await ProcessTools.waitFor(process, Constants.WAIT_INTERVAL_IN_MILLIS))
             {
+                if (expectProcessExit)
+                    return undefined;
+
                 const title = `Unexpected process exit while waiting for ${waitForName}.`;
 
                 let content = "";
@@ -43,14 +49,12 @@ export class TimedReader
                 content = content.trim();
 
                 if (content)
-                {
                     content += "\n";
-                }
 
                 content += "Did you install the dart_format package?\n" +
                     "Basically just execute this:<pre>dart pub global activate dart_format</pre>";
 
-                const actions = [NotificationTools.createCheckInstallationInstructionsLink()];
+                const actions = NotificationTools.createInstallActions("Install");
                 // TODO: add report link?
                 NotificationTools.notifyError(title, content, actions);
 
@@ -72,9 +76,7 @@ export class TimedReader
     {
         const availableBytes = streamReader.available();
         if (availableBytes <= 0)
-        {
             return undefined;
-        }
 
         if (Constants.DEBUG_TIMED_READER) logDebug(`TimedReader.receiveLine(${name})`);
         if (Constants.DEBUG_TIMED_READER) logDebug(`  Receiving: ${availableBytes} bytes.`);
@@ -91,9 +93,7 @@ export class TimedReader
         {
             const s = TimedReader.receiveLine(streamReader, name);
             if (!s)
-            {
                 break;
-            }
 
             if (Constants.DEBUG_TIMED_READER) logDebug(`TimedReader.receiveLines: Received: ${StringTools.toDisplayString(s)}.`);
             r += prefix + s;

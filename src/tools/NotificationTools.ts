@@ -1,34 +1,39 @@
 import vscode from "vscode";
-import {LinkInfo} from "../data/LinkInfo";
 import {NotificationType} from "../enums/NotificationType";
-import {logDebug} from "./LogTools";
+import {ActionInfo} from "../data/ActionInfo";
 
 export class NotificationTools
 {
-    static createCheckInstallationInstructionsLink(): LinkInfo
+    static createCheckInstallationInstructionsAction(): ActionInfo
     {
-        return new LinkInfo("Installation instructions for dart_format", "https://pub.dev/packages/dart_format/install");
+        return ActionInfo.createBrowserAction("Installation instructions for dart_format", "https://pub.dev/packages/dart_format/install");
     }
 
-    static notifyError(message: string, content?: string, actions?: LinkInfo[]): void
+    static createInstallAction(name: string): ActionInfo
+    {
+        const successAction = new ActionInfo("Restart extensions", async () => { await vscode.commands.executeCommand('workbench.action.restartExtensionHost'); });
+        return ActionInfo.createExternalAction(name + " dart_format", "dart", ["pub", "global", "activate", "dart_format"], successAction);
+    }
+
+    static notifyError(message: string, content?: string, actions?: ActionInfo[]): void
     {
         // noinspection JSIgnoredPromiseFromCall
         this.notifyAsync(NotificationType.Error, message, content, actions);
     }
 
-    static notifyInfo(message: string, content?: string, actions?: LinkInfo[]): void
+    static notifyInfo(message: string, content?: string, actions?: ActionInfo[]): void
     {
         // noinspection JSIgnoredPromiseFromCall
         this.notifyAsync(NotificationType.Info, message, content, actions);
     }
 
-    static notifyWarning(message: string, content?: string, actions?: LinkInfo[]): void
+    static notifyWarning(message: string, content?: string, actions?: ActionInfo[]): void
     {
         // noinspection JSIgnoredPromiseFromCall
         this.notifyAsync(NotificationType.Warning, message, content, actions);
     }
 
-    private static async notifyAsync(type: NotificationType, message: string, content?: string, actions?: LinkInfo[]): Promise<void>
+    static async notifyAsync(type: NotificationType, message: string, content?: string, actions?: ActionInfo[]): Promise<void>
     {
         const fixedContent = (content ?? "")
             .replace(/\n/g, " ")
@@ -36,41 +41,35 @@ export class NotificationTools
             .replace(/<pre>/g, " ")
             .replace(/<\/pre>/g, " ");
 
-        const linkInfoNames: string[] = actions?.map((linkInfo: LinkInfo) => linkInfo.name) ?? [];
+        const actionNames = actions?.map((action: ActionInfo) => action.name) ?? [];
 
-        let linkInfoName: string | undefined = undefined;
+        let chosenActionName: string | undefined = undefined;
         switch (type)
         {
             case NotificationType.Error:
-                linkInfoName = await vscode.window.showErrorMessage<string>(message + " " + fixedContent, ...linkInfoNames);
+                chosenActionName = await vscode.window.showErrorMessage<string>(message + " " + fixedContent, ...actionNames);
                 break;
             case NotificationType.Info:
-                linkInfoName = await vscode.window.showInformationMessage<string>(message + " " + fixedContent, ...linkInfoNames);
+                chosenActionName = await vscode.window.showInformationMessage<string>(message + " " + fixedContent, ...actionNames);
                 break;
             case NotificationType.Warning:
-                linkInfoName = await vscode.window.showWarningMessage<string>(message + " " + fixedContent, ...linkInfoNames);
+                chosenActionName = await vscode.window.showWarningMessage<string>(message + " " + fixedContent, ...actionNames);
                 break;
         }
 
-        if (!linkInfoName)
+        if (!chosenActionName)
             return;
 
-        logDebug("linkInfoName: " + linkInfoName);
-        const linkInfo = actions?.find((linkInfo: LinkInfo) => linkInfo.name === linkInfoName);
-        if (linkInfo)
-            vscode.env.openExternal(vscode.Uri.parse(linkInfo.url));
+        const chosenAction = actions?.find((action: ActionInfo) => action.name === chosenActionName);
+        if (chosenAction)
+            chosenAction.callback();
     }
 
-    static async notifyWarningWithAction(message: string, content: string, actionTitle: string, actionCallback: () => void): Promise<void>
+    static createInstallActions(name: string)
     {
-        const fixedContent = content
-            .replace(/\n/g, " ")
-            .replace(/<br\/>/g, " ")
-            .replace(/<pre>/g, " ")
-            .replace(/<\/pre>/g, " ");
-
-        const chosenAction = await vscode.window.showWarningMessage<string>(message + " " + fixedContent, actionTitle);
-        if (chosenAction === actionTitle)
-            actionCallback();
+        return [
+            NotificationTools.createInstallAction(name),
+            NotificationTools.createCheckInstallationInstructionsAction()
+        ];
     }
 }

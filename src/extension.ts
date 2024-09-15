@@ -17,6 +17,7 @@ import {DartFormatError} from "./data/DartFormatException";
 import {FormData} from "./data/FormData";
 import {FailType} from "./enums/FailType";
 import {Config} from "./data/Config";
+import {ActionInfo} from "./data/ActionInfo";
 
 let externalDartFormatProcess: Process | undefined;
 let dartFormatClient: DartFormatClient | undefined;
@@ -109,8 +110,8 @@ async function getConfigOrWarn(): Promise<Config | undefined>
     if (config && !config.hasNothingEnabled())
         return config;
 
-    const action = () => vscode.commands.executeCommand('workbench.action.openSettings', '@ext:eggnstone.DartFormat');
-    await NotificationTools.notifyWarningWithAction("DartFormat: No formatting options set.", "", "Open settings", action);
+    const action = new ActionInfo("Open settings", () => vscode.commands.executeCommand('workbench.action.openSettings', '@ext:eggnstone.DartFormat'));
+    NotificationTools.notifyWarning("DartFormat: No formatting options set.", "", [action]);
     return undefined;
 }
 
@@ -174,7 +175,7 @@ async function startExternalDartFormatProcess(): Promise<boolean>
         const title = "Failed to start external dart_format: " + externalDartFormatFilePathOrError.message;
         const content = "Did you install the dart_format package?\n" +
             "Basically just execute this:<pre>dart pub global activate dart_format</pre>";
-        const actions = [NotificationTools.createCheckInstallationInstructionsLink()];
+        const actions = NotificationTools.createInstallActions("Install");
         NotificationTools.notifyError(title, content, actions);
         return false;
     }
@@ -189,7 +190,7 @@ async function startExternalDartFormatProcess(): Promise<boolean>
         const title = "Failed to start external dart_format: ?";
         const content = "Did you install the dart_format package?\n" +
             "Basically just execute this:<pre>dart pub global activate dart_format</pre>";
-        const actions = [NotificationTools.createCheckInstallationInstructionsLink()];
+        const actions = NotificationTools.createInstallActions("Install");
         NotificationTools.notifyError(title, content, actions);
         return false;
     }
@@ -202,7 +203,14 @@ async function startExternalDartFormatProcess(): Promise<boolean>
 
     while (true)
     {
-        readLineResponse = await TimedReader.readLine(externalDartFormatProcess, processStdOutReader, processStdErrReader, Constants.WAIT_FOR_EXTERNAL_DART_FORMAT_START_IN_SECONDS, "connection details from external dart_format");
+        readLineResponse = await TimedReader.readLine(
+            externalDartFormatProcess,
+            processStdOutReader,
+            processStdErrReader,
+            Constants.WAIT_FOR_EXTERNAL_DART_FORMAT_START_IN_SECONDS,
+            "connection details from external dart_format",
+            false
+        );
         if (readLineResponse === undefined)
             break;
 
@@ -245,7 +253,7 @@ async function startExternalDartFormatProcess(): Promise<boolean>
         content += "Did you install the dart_format package?\n" +
             "Basically just execute this:<pre>dart pub global activate dart_format</pre>";
 
-        const actions = [NotificationTools.createCheckInstallationInstructionsLink()];
+        const actions = NotificationTools.createInstallActions("Install");
         // TODO: add report link?
         NotificationTools.notifyError(title, content, actions);
         return false;
@@ -274,7 +282,7 @@ async function startExternalDartFormatProcess(): Promise<boolean>
         const title = "A new version of the dart_format package is available.";
         const content = "<pre>Current version: " + currentVersion + "\nLatest version:  " + latestVersion + "</pre>" +
             "Just execute this again:<pre>dart pub global activate dart_format</pre>";
-        const actions = [NotificationTools.createCheckInstallationInstructionsLink()];
+        const actions = NotificationTools.createInstallActions("Update");
         NotificationTools.notifyInfo(title, content, actions);
     }
 
