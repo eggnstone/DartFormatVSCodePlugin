@@ -109,7 +109,7 @@ async function getConfigOrWarn(): Promise<Config | undefined>
     if (config && !config.hasNothingEnabled())
         return config;
 
-    const action = () => vscode.commands.executeCommand('workbench.action.openSettings', 'DartFormat');
+    const action = () => vscode.commands.executeCommand('workbench.action.openSettings', '@ext:eggnstone.DartFormat');
     await NotificationTools.notifyWarningWithAction("DartFormat: No formatting options set.", "", "Open settings", action);
     return undefined;
 }
