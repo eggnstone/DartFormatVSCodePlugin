@@ -4,7 +4,7 @@
 
 Like dartfmt.  
 But better ;)  
-(Because it's configurable. (coming soon))
+(Because it's configurable.)
 
 Press `Ctrl`+`Alt`+`,` to format your code.
 
@@ -16,7 +16,6 @@ Basically just call this from the command line:
 **Beta version!**  
 Formatting the currently selected file already works.  
 Formatting multiple files comes soon.  
-Configuring the formatter comes soon.  
 
 **This extension:**  
 Source code: <a href="https://github.com/eggnstone/DartFormatVSCodePlugin">DartFormatVSCodePlugin on GitHub</a>  

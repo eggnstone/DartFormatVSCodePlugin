@@ -88,7 +88,7 @@
       }
     ]
   },
-  "description": "A formatter for Dart. Like dartfmt. But better ;) (Because it's configurable. (coming soon))",
+  "description": "A formatter for Dart. Like dartfmt. But better ;) (Because it's configurable.)",
   "devDependencies": {
     "@types/vscode": "^1.93.0",
     "@types/mocha": "^10.0.8",
@@ -117,5 +117,5 @@
     "lint": "eslint src --ext ts",
     "test": "vscode-test"
   },
-  "version": "0.3.1"
+  "version": "0.3.2"
 }
