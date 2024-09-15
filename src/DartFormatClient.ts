@@ -1,5 +1,5 @@
 import {logDebug} from "./tools/LogTools";
-import {FormData} from "./FormData";
+import {FormData} from "./data/FormData";
 import {JsonTools} from "./tools/JsonTools";
 
 export class DartFormatClient

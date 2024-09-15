@@ -9,14 +9,14 @@ import {NotificationTools} from "./tools/NotificationTools";
 import {logDebug, logError} from "./tools/LogTools";
 import {spawn} from "node:child_process";
 import {OsTools} from "./tools/OsTools";
-import {Process} from "./Process";
+import {Process} from "./data/Process";
 import {JsonTools} from "./tools/JsonTools";
 import {Version} from "./data/Version";
 import {DartFormatClient} from "./DartFormatClient";
 import {DartFormatError} from "./data/DartFormatException";
-import {FormData} from "./FormData";
+import {FormData} from "./data/FormData";
 import {FailType} from "./enums/FailType";
-import {Config} from "./Config";
+import {Config} from "./data/Config";
 
 let externalDartFormatProcess: Process | undefined;
 let dartFormatClient: DartFormatClient | undefined;

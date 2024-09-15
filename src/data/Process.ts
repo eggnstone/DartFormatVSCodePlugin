@@ -1,6 +1,6 @@
 import {ChildProcess} from "node:child_process";
 import {Readable} from "node:stream";
-import {logDebug} from "./tools/LogTools";
+import {logDebug} from "../tools/LogTools";
 import {SendHandle, Serializable} from "child_process";
 
 export class Process

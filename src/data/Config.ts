@@ -1,6 +1,6 @@
 import {WorkspaceConfiguration} from "vscode";
-import {logDebug} from "./tools/LogTools";
-import {JsonTools} from "./tools/JsonTools";
+import {logDebug} from "../tools/LogTools";
+import {JsonTools} from "../tools/JsonTools";
 
 export class Config
 {

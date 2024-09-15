@@ -1,4 +1,4 @@
-import {Process} from "../Process";
+import {Process} from "../data/Process";
 
 export class ProcessTools
 {

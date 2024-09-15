@@ -7,7 +7,7 @@ import {ProcessTools} from "./tools/ProcessTools";
 import {NotificationTools} from "./tools/NotificationTools";
 import {logDebug, logError} from "./tools/LogTools";
 import {Tools} from "./tools/Tools";
-import {Process} from "./Process";
+import {Process} from "./data/Process";
 
 export class TimedReader
 {

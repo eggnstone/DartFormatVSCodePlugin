@@ -1,4 +1,4 @@
-import {logDebug} from "./tools/LogTools";
+import {logDebug} from "../tools/LogTools";
 
 export class FormData
 {
