@@ -40,7 +40,12 @@ export class OsTools
         else
         {
             logDebug("  IsWindows: false (" + process.platform + ")");
-            externalDartFormatFilePath = "~/.pub-cache/bin/dart_format";
+            const envHome = process.env["HOME"];
+            logDebug("  $HOME:     " + envHome);
+            if (!envHome)
+                return new Error("Cannot execute dart_format: HOME environment variable is not set.");
+
+            externalDartFormatFilePath = envHome + "/.pub-cache/bin/dart_format";
         }
 
         logDebug(`  externalDartFormatFilePath: ${externalDartFormatFilePath}`);

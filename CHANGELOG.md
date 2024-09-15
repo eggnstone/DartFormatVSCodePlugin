@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.3.1]
+
+- Fixing start problems on Linux/macOS.
+
 ## [0.3.0]
 
 - Added install/update actions.
