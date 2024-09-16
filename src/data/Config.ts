@@ -4,16 +4,16 @@ import {JsonTools} from "../tools/JsonTools";
 
 export class Config
 {
-    private addNewLineBeforeOpeningBrace: boolean = false;
-    private addNewLineAfterOpeningBrace: boolean = false;
-    private addNewLineBeforeClosingBrace: boolean = false;
-    private addNewLineAfterClosingBrace: boolean = false;
-    private addNewLineAfterSemicolon: boolean = false;
-    private addNewLineAtEndOfText: boolean = false;
-    private fixSpaces: boolean = false;
-    private removeTrailingCommas: boolean = false;
-    private indentationSpacesPerLevel: number = -1;
-    private maxEmptyLines: number = -1;
+    private readonly addNewLineBeforeOpeningBrace: boolean = false;
+    private readonly addNewLineAfterOpeningBrace: boolean = false;
+    private readonly addNewLineBeforeClosingBrace: boolean = false;
+    private readonly addNewLineAfterClosingBrace: boolean = false;
+    private readonly addNewLineAfterSemicolon: boolean = false;
+    private readonly addNewLineAtEndOfText: boolean = false;
+    private readonly fixSpaces: boolean = false;
+    private readonly removeTrailingCommas: boolean = false;
+    private readonly indentationSpacesPerLevel: number = -1;
+    private readonly maxEmptyLines: number = -1;
 
     private constructor(configuration: WorkspaceConfiguration)
     {

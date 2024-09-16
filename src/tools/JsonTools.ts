@@ -36,6 +36,7 @@ export class JsonTools
         return JsonTools.getOrUndefined(json, key)?.toString() ?? def;
     }
 
+    // noinspection JSUnusedGlobalSymbols
     static getIntOrUndefined(json: any, key: string): number | undefined
     {
         if (Constants.DEBUG_JSON_TOOLS)

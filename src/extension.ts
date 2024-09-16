@@ -1,14 +1,11 @@
 import * as vscode from 'vscode';
 import {Position, Range} from 'vscode';
-import {SpawnOptions} from "child_process";
 import {StreamReader} from "./StreamReader";
 import {ReadLineResponse} from "./data/ReadLineResponse";
 import {TimedReader} from "./TimedReader";
 import {Constants} from "./Constants";
 import {NotificationTools} from "./tools/NotificationTools";
 import {logDebug, logError} from "./tools/LogTools";
-import {spawn} from "node:child_process";
-import {OsTools} from "./tools/OsTools";
 import {Process} from "./data/Process";
 import {JsonTools} from "./tools/JsonTools";
 import {Version} from "./data/Version";
@@ -18,6 +15,8 @@ import {FormData} from "./data/FormData";
 import {FailType} from "./enums/FailType";
 import {Config} from "./data/Config";
 import {ActionInfo} from "./data/ActionInfo";
+import {ExternalDartFormatTools} from "./tools/ExternalDartFormatTools";
+import {ProcessTools} from "./tools/ProcessTools";
 
 let externalDartFormatProcess: Process | undefined;
 let dartFormatClient: DartFormatClient | undefined;
@@ -169,10 +168,10 @@ async function format(): Promise<void>
 
 async function startExternalDartFormatProcess(): Promise<boolean>
 {
-    const externalDartFormatFilePathOrError = OsTools.getExternalDartFormatFilePathOrError();
-    if (externalDartFormatFilePathOrError instanceof Error)
+    const externalDartFormatFilePathOrError = ExternalDartFormatTools.getExternalDartFormatFilePathOrError();
+    if (externalDartFormatFilePathOrError.error)
     {
-        const title = "Failed to start external dart_format: " + externalDartFormatFilePathOrError.message;
+        const title = "Failed to start external dart_format: " + externalDartFormatFilePathOrError.error.message;
         const content = "Did you install the dart_format package?\n" +
             "Basically just execute this:<pre>dart pub global activate dart_format</pre>";
         const actions = NotificationTools.createInstallActions("Install");
@@ -180,10 +179,8 @@ async function startExternalDartFormatProcess(): Promise<boolean>
         return false;
     }
 
-    const args = ["--web", "--errors-as-json", "--log-to-temp-file"];
-    const spawnOptions: SpawnOptions = {shell: true /*, stdio: [Stdin, Stdout, Stderr]*/};
-    logDebug("Starting external dart_format: " + externalDartFormatFilePathOrError + " " + args.join(" "));
-    externalDartFormatProcess = new Process(spawn(externalDartFormatFilePathOrError, args, spawnOptions));
+    const command = externalDartFormatFilePathOrError.path! + " --web --errors-as-json --log-to-temp-file";
+    externalDartFormatProcess = ProcessTools.spawn(command);
 
     if (!externalDartFormatProcess.isAlive())
     {
@@ -280,8 +277,7 @@ async function startExternalDartFormatProcess(): Promise<boolean>
     if (currentVersion?.isOlderThan(latestVersion))
     {
         const title = "A new version of the dart_format package is available.";
-        const content = "<pre>Current version: " + currentVersion + "\nLatest version:  " + latestVersion + "</pre>" +
-            "Just execute this again:<pre>dart pub global activate dart_format</pre>";
+        const content = "<pre>Current version: " + currentVersion + "\nLatest version:  " + latestVersion + "</pre>";
         const actions = NotificationTools.createInstallActions("Update");
         NotificationTools.notifyInfo(title, content, actions);
     }

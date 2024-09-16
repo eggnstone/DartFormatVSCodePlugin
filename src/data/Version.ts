@@ -11,11 +11,6 @@ export class Version
         this.patch = patch;
     }
 
-    toString(): String
-    {
-        return `${this.major}.${this.minor}.${this.patch}`;
-    }
-
     static parse(s: String): Version
     {
         const parts = s.split(".");
@@ -36,6 +31,11 @@ export class Version
         {
             return undefined;
         }
+    }
+
+    toString(): String
+    {
+        return `${this.major}.${this.minor}.${this.patch}`;
     }
 
     isOlderThan(otherVersion: Version | undefined): Boolean

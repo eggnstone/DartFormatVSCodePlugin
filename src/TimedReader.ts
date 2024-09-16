@@ -72,19 +72,6 @@ export class TimedReader
         throw DartFormatError.localError(errorText);
     }
 
-    private static receiveLine(streamReader: StreamReader, name: string): string | undefined
-    {
-        const availableBytes = streamReader.available();
-        if (availableBytes <= 0)
-            return undefined;
-
-        if (Constants.DEBUG_TIMED_READER) logDebug(`TimedReader.receiveLine(${name})`);
-        if (Constants.DEBUG_TIMED_READER) logDebug(`  Receiving: ${availableBytes} bytes.`);
-        const s = streamReader.readLine();
-        if (Constants.DEBUG_TIMED_READER) logDebug(`  Received: ${StringTools.toDisplayString(s)}.`);
-        return s;
-    }
-
     static receiveLines(streamReader: StreamReader, name: string, prefix: String): string | undefined
     {
         let r = "";
@@ -100,5 +87,18 @@ export class TimedReader
         }
 
         return r;
+    }
+
+    private static receiveLine(streamReader: StreamReader, name: string): string | undefined
+    {
+        const availableBytes = streamReader.available();
+        if (availableBytes <= 0)
+            return undefined;
+
+        if (Constants.DEBUG_TIMED_READER) logDebug(`TimedReader.receiveLine(${name})`);
+        if (Constants.DEBUG_TIMED_READER) logDebug(`  Receiving: ${availableBytes} bytes.`);
+        const s = streamReader.readLine();
+        if (Constants.DEBUG_TIMED_READER) logDebug(`  Received: ${StringTools.toDisplayString(s)}.`);
+        return s;
     }
 }

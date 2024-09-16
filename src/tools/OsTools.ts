@@ -1,73 +1,48 @@
-import fs from "fs";
 import {logDebug} from "./LogTools";
 
 export class OsTools
 {
-    static getExternalDartFormatFilePathOrError(): (string | Error)
+    static readonly instance = new OsTools();
+
+    readonly envHome?: string;
+    readonly envLocalAppData?: string;
+    readonly envPubCache?: string;
+    readonly envShell: string;
+    readonly envShellParam: string;
+    readonly isWindows: boolean;
+
+    constructor()
     {
-        logDebug("Tools.getExternalDartFormatFilePathOrError()");
+        logDebug("OsTools()");
 
-        let externalDartFormatFilePath;
+        this.isWindows = process.platform === "win32";
+        logDebug("  IsWindows:      " + this.isWindows + " (" + process.platform + ")");
 
-        if (OsTools.isWindows())
+        //logDebug("  TempDir:        " + this.getTempDirName())
+
+        if (this.isWindows)
         {
-            logDebug("  IsWindows:      true (" + process.platform + ")");
+            this.envLocalAppData = process.env["LOCALAPPDATA"];
+            logDebug("  %LOCALAPPDATA%: " + this.envLocalAppData);
 
-            const envPubCache = process.env["PUB_CACHE"];
-            logDebug(`  %PUB_CACHE%:    ${envPubCache}`);
-            const envLocalAppData = process.env["LOCALAPPDATA"];
-            logDebug(`  %LOCALAPPDATA%: ${envLocalAppData}`);
+            this.envPubCache = process.env["PUB_CACHE"];
+            logDebug("  %PUB_CACHE%:    " + this.envPubCache);
 
-            if (envPubCache)
-            {
-                externalDartFormatFilePath = envPubCache;
-            }
-            else
-            {
-                if (!envLocalAppData)
-                {
-                    return new Error(
-                        "Cannot find the dart_format package:" +
-                        " Neither PUB_CACHE or LOCALAPPDATA environment variable are set."
-                    );
-                }
-
-                externalDartFormatFilePath = `${envLocalAppData}\\Pub\\Cache`;
-            }
-
-            externalDartFormatFilePath = `${externalDartFormatFilePath}\\bin\\dart_format.bat`;
+            this.envHome = undefined;
+            this.envShell = "cmd";
+            this.envShellParam = "/c";
         }
         else
         {
-            logDebug("  IsWindows: false (" + process.platform + ")");
+            this.envHome = process.env["HOME"];
+            logDebug("  \$HOME:          " + this.envHome);
 
-            const envShell = process.env["SHELL"];
-            logDebug("  $SHELL:    " + envShell);
+            this.envShell = process.env["SHELL"] || "";
+            logDebug("  \$SHELL:         " + this.envShell);
 
-            const envHome = process.env["HOME"];
-            logDebug("  $HOME:     " + envHome);
-
-            if (!envHome)
-                return new Error("Cannot execute dart_format: HOME environment variable is not set.");
-
-            externalDartFormatFilePath = envHome + "/.pub-cache/bin/dart_format";
+            this.envLocalAppData = undefined;
+            this.envPubCache = undefined;
+            this.envShellParam = "-c";
         }
-
-        logDebug(`  externalDartFormatFilePath: ${externalDartFormatFilePath}`);
-        if (!fs.existsSync(externalDartFormatFilePath))
-        {
-            return new Error(
-                "Cannot find the dart_format package:" +
-                " File does not exist at expected location:" +
-                " " + externalDartFormatFilePath
-            );
-        }
-
-        return externalDartFormatFilePath;
-    }
-
-    static isWindows(): boolean
-    {
-        return process.platform === "win32";
     }
 }

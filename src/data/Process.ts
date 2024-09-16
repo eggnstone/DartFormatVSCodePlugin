@@ -5,11 +5,10 @@ import {SendHandle, Serializable} from "child_process";
 
 export class Process
 {
-    private readonly childProcess: ChildProcess;
-    private _isAlive: boolean;
-
     stdOut: Readable;
     stdErr: Readable;
+    private readonly childProcess: ChildProcess;
+    private _isAlive: boolean;
 
     constructor(childProcess: ChildProcess)
     {
@@ -53,7 +52,7 @@ export class Process
         return this._isAlive;
     }
 
-    exitCode() : number | null
+    exitCode(): number | null
     {
         return this.childProcess.exitCode;
     }

@@ -1,14 +1,10 @@
 import vscode from "vscode";
-import {SpawnOptions} from "child_process";
-import {Process} from "./Process";
-import {spawn} from "node:child_process";
 import {NotificationTools} from "../tools/NotificationTools";
 import {StreamReader} from "../StreamReader";
 import {ReadLineResponse} from "./ReadLineResponse";
 import {TimedReader} from "../TimedReader";
 import {Constants} from "../Constants";
-import {logDebug} from "../tools/LogTools";
-import {JsonTools} from "../tools/JsonTools";
+import {ProcessTools} from "../tools/ProcessTools";
 
 export class ActionInfo
 {
@@ -21,21 +17,20 @@ export class ActionInfo
         this.callback = callback;
     }
 
-    static createBrowserAction(name: string, url: string) : ActionInfo
+    static createBrowserAction(name: string, url: string): ActionInfo
     {
         return new ActionInfo(name, () => vscode.env.openExternal(vscode.Uri.parse(url)));
     }
 
-    static createExternalAction(name: string, command: string, args: string[], successAction: ActionInfo): ActionInfo
+    static createExternalAction(name: string, command: string, successAction: ActionInfo): ActionInfo
     {
         return new ActionInfo(name, async () =>
         {
-            const spawnOptions: SpawnOptions = {shell: true};
-            NotificationTools.notifyInfo(("Starting process: " + command + " " + args.join(" ")));
-            const process = new Process(spawn(command, args, spawnOptions));
+            NotificationTools.notifyInfo(("Starting process: " + command));
+            const process = ProcessTools.spawn(command);
             if (!process.isAlive())
             {
-                const title = "Failed to start process: " + command + " " + args.join(" ");
+                const title = "Failed to start process: " + command;
                 NotificationTools.notifyError(title);
                 return;
             }

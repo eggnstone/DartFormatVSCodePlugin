@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.3.2]
+## [0.3.3]
 
 - Fixed startup problems on Linux/macOS.
 

@@ -1,5 +1,3 @@
-import {logDebug} from "../tools/LogTools";
-
 export class FormData
 {
     private parts: any = {};

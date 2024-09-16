@@ -45,6 +45,11 @@ export class StreamReader
         return s;
     }
 
+    available(): number
+    {
+        return this.buffer.length;
+    }
+
     private read(): number
     {
         if (this.buffer.length === 0)
@@ -55,10 +60,5 @@ export class StreamReader
         const c = this.buffer.charCodeAt(0);
         this.buffer = this.buffer.substring(1);
         return c;
-    }
-
-    available(): number
-    {
-        return this.buffer.length;
     }
 }

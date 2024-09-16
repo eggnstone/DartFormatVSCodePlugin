@@ -16,9 +16,6 @@
       <option name="CATCH_ON_NEW_LINE" value="true" />
       <option name="FINALLY_ON_NEW_LINE" value="true" />
       <option name="KEEP_SIMPLE_BLOCKS_IN_ONE_LINE" value="true" />
-      <option name="DOWHILE_BRACE_FORCE" value="3" />
-      <option name="WHILE_BRACE_FORCE" value="3" />
-      <option name="FOR_BRACE_FORCE" value="3" />
     </codeStyleSettings>
     <codeStyleSettings language="TypeScript">
       <option name="RIGHT_MARGIN" value="999" />
@@ -29,9 +26,6 @@
       <option name="ELSE_ON_NEW_LINE" value="true" />
       <option name="CATCH_ON_NEW_LINE" value="true" />
       <option name="FINALLY_ON_NEW_LINE" value="true" />
-      <option name="DOWHILE_BRACE_FORCE" value="3" />
-      <option name="WHILE_BRACE_FORCE" value="3" />
-      <option name="FOR_BRACE_FORCE" value="3" />
     </codeStyleSettings>
     <codeStyleSettings language="Vue">
       <indentOptions>
