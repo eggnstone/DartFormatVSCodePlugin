@@ -19,8 +19,8 @@ export class ProcessTools
     static spawn(command: string): Process
     {
         logDebug("ProcessTools.spawn()");
-        logDebug("  envShell:      " + OsTools.instance.envShell);
-        logDebug("  envShellParam: " + OsTools.instance.envShellParam);
+        /*logDebug("  envShell:      " + OsTools.instance.envShell);
+        logDebug("  envShellParam: " + OsTools.instance.envShellParam);*/
         logDebug("  command:       " + command);
 
         const fullCommand = `${OsTools.instance.envShell} ${OsTools.instance.envShellParam} "${command}"`;
