@@ -52,7 +52,7 @@
         },
         "dartFormat.spaces.fix": {
           "default": false,
-          "markdownDescription": "Fix spaces (EXPERIMENTAL)\n\nFor example `for(int i=0;i<;10;i++)` to `for (int i = 0; i < 10; i++)`",
+          "markdownDescription": "Fix spaces\n\nFor example `for(int i=0;i<;10;i++)` to `for (int i = 0; i < 10; i++)`",
           "order": 7,
           "type": "boolean"
         },
@@ -117,5 +117,5 @@
     "lint": "eslint src --ext ts",
     "test": "vscode-test"
   },
-  "version": "0.3.3"
+  "version": "0.3.4"
 }

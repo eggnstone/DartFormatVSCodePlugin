@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.3.4]
+
+- "Fix spaces" now not experimental anymore.
+
 ## [0.3.3]
 
 - Fixed startup problems on Linux/macOS.
