@@ -11,6 +11,6 @@ vsc-extension-quickstart.md
 **/.vscode-test.*
 
 ### Manually added ###
-.idea/
+/.idea/
 *.bat
-TODO.txt
+TODO.md

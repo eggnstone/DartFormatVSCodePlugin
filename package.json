@@ -105,7 +105,7 @@
     "vscode": "^1.93.0"
   },
   "icon": "images/DartFormat512.png",
-  "main": "./out/extension.js",
+  "main": "./out/Extension.js",
   "name": "DartFormat",
   "publisher": "eggnstone",
   "repository": "https://github.com/eggnstone/DartFormatVSCodePlugin",
