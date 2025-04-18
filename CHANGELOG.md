@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.3.4]
+## [1.0.0]
 
 - "Fix spaces" now not experimental anymore.
 
