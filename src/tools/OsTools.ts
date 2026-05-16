@@ -7,6 +7,11 @@ export class OsTools
     readonly envHome?: string;
     readonly envLocalAppData?: string;
     readonly envPubCache?: string;
+    // Unix only: the user's interactive shell, used as `$SHELL -ilc "<cmd>"` so
+    // dart_format and `dart pub global activate` see the full interactive PATH
+    // (modern macOS / zsh setups keep dart/flutter PATH additions in .zshrc,
+    // which a non-interactive shell wouldn't load). Empty on Windows.
+    readonly envShell: string;
     readonly isWindows: boolean;
 
     constructor()
@@ -25,6 +30,7 @@ export class OsTools
             logDebug("  %PUB_CACHE%:    " + this.envPubCache);
 
             this.envHome = undefined;
+            this.envShell = "";
         }
         else
         {
@@ -33,6 +39,9 @@ export class OsTools
 
             this.envPubCache = process.env["PUB_CACHE"];
             logDebug("  \$PUB_CACHE:     " + this.envPubCache);
+
+            this.envShell = process.env["SHELL"] ?? "";
+            logDebug("  \$SHELL:         " + this.envShell);
 
             this.envLocalAppData = undefined;
         }

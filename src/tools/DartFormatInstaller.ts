@@ -1,7 +1,6 @@
 import {ExternalDartFormatTools} from "./ExternalDartFormatTools";
 import {logDebug} from "./LogTools";
 import {NotificationTools} from "./NotificationTools";
-import {OsTools} from "./OsTools";
 import {ProcessTools} from "./ProcessTools";
 
 export class DartFormatInstaller
@@ -26,35 +25,11 @@ export class DartFormatInstaller
         const verbLow = isUpdate ? "update" : "install";
         const verbEd = isUpdate ? "Updated" : "Installed";
 
-        const dartPath = dartPathOrError.path!;
-        const activateArgs = ["pub", "global", "activate", "dart_format"];
-
-        // Mirrors the path-resolution in NotificationTools.createInstallAction:
-        // on Unix without ~/.pub-cache/bin in PATH we go through /bin/sh -c so
-        // the binary lands somewhere reachable for the rest of the session.
-        let executable: string;
-        let args: string[];
-        if (OsTools.instance.isWindows)
-        {
-            executable = dartPath;
-            args = activateArgs;
-        }
-        else
-        {
-            const envPath = process.env["PATH"] ?? "";
-            const pubCacheBinPath = OsTools.instance.envHome + "/.pub-cache/bin";
-            if (envPath.indexOf(pubCacheBinPath) >= 0)
-            {
-                executable = dartPath;
-                args = activateArgs;
-            }
-            else
-            {
-                const shellCommand = `export PATH="$PATH:${pubCacheBinPath}" && ${dartPath} ${activateArgs.join(" ")}`;
-                executable = "/bin/sh";
-                args = ["-c", shellCommand];
-            }
-        }
+        // ProcessTools.spawn already handles the cross-platform plumbing:
+        // Windows runs through cmd.exe; Unix runs through `$SHELL -ilc ...`
+        // so the user's interactive PATH (where dart lives) is sourced.
+        const executable = dartPathOrError.path!;
+        const args = ["pub", "global", "activate", "dart_format"];
 
         NotificationTools.notifyInfo(`${verbIng} dart_format ...`, "This may take a few seconds.");
         logDebug(`DartFormatInstaller.tryInstall: ${executable} ${args.join(" ")}`);

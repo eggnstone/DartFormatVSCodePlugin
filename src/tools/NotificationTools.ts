@@ -2,7 +2,6 @@ import vscode from "vscode";
 import {NotificationType} from "../enums/NotificationType";
 import {ActionInfo} from "../data/ActionInfo";
 import {ExternalDartFormatTools} from "./ExternalDartFormatTools";
-import {OsTools} from "./OsTools";
 
 export class NotificationTools
 {
@@ -22,20 +21,11 @@ export class NotificationTools
         if (!installExternalDartFormatInfo.path)
             return undefined;
 
+        // ProcessTools.spawn handles the platform plumbing (cmd.exe on Windows,
+        // `$SHELL -ilc` on Unix to source rc files so `dart` is on PATH).
         const dartPath = installExternalDartFormatInfo.path!;
         const activateArgs = ["pub", "global", "activate", "dart_format"];
-
-        if (OsTools.instance.isWindows)
-            return ActionInfo.createExternalAction(name + " dart_format", dartPath, activateArgs, successAction);
-
-        const envPath = process.env["PATH"];
-        const pubCacheBinPath = OsTools.instance.envHome + "/.pub-cache/bin";
-        if (envPath && envPath.indexOf(pubCacheBinPath) >= 0)
-            return ActionInfo.createExternalAction(name + " dart_format", dartPath, activateArgs, successAction);
-
-        // Extend PATH for `dart pub global activate` so the cached binary is reachable afterwards.
-        const shellCommand = `export PATH="$PATH:${pubCacheBinPath}" && ${dartPath} ${activateArgs.join(" ")}`;
-        return ActionInfo.createExternalAction(name + " dart_format", "/bin/sh", ["-c", shellCommand], successAction);
+        return ActionInfo.createExternalAction(name + " dart_format", dartPath, activateArgs, successAction);
     }
 
     static notifyError(message: string, content?: string, actions?: ActionInfo[]): void
