@@ -34,6 +34,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void>
     const disposable = vscode.commands.registerCommand('DartFormat.format', format);
     context.subscriptions.push(disposable);
 
+    const formattingProvider = vscode.languages.registerDocumentFormattingEditProvider(
+        {language: "dart"},
+        {provideDocumentFormattingEdits: provideDartFormattingEdits}
+    );
+    context.subscriptions.push(formattingProvider);
+
     try
     {
         await startExternalDartFormatProcess();
@@ -195,6 +201,33 @@ async function formatGuarded(): Promise<void>
     const title = `Formatting took ${diffTimeText}.`;
     const content = formattedText === unformattedText ? "Nothing changed." : "";
     NotificationTools.notifyInfo(title, content);
+}
+
+// Silent variant for VSCode's "Format Document" / format-on-save flow.
+// Skips status notifications (the user didn't ask via our command) but still
+// surfaces server-side errors through formatText.
+async function provideDartFormattingEdits(document: vscode.TextDocument): Promise<vscode.TextEdit[] | undefined>
+{
+    if (!externalDartFormatProcess || !externalDartFormatProcess.isAlive())
+        return undefined;
+
+    if (!dartFormatClient)
+        return undefined;
+
+    const config = Config.parse(vscode.workspace.getConfiguration("dartFormat"));
+    if (!config || config.hasNothingEnabled())
+        return undefined;
+
+    const unformattedText = document.getText();
+    const formattedText = await formatText(unformattedText, config);
+    if (formattedText === undefined)
+        return undefined;
+
+    if (formattedText === unformattedText)
+        return [];
+
+    const fullRange = new Range(new Position(0, 0), document.positionAt(unformattedText.length));
+    return [vscode.TextEdit.replace(fullRange, formattedText)];
 }
 
 async function startExternalDartFormatProcess(): Promise<boolean>
