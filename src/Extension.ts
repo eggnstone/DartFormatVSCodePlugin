@@ -22,6 +22,11 @@ import {ProcessTools} from "./tools/ProcessTools";
 let externalDartFormatProcess: Process | undefined;
 let dartFormatClient: DartFormatClient | undefined;
 let isFormatting = false;
+let isStarted = false;
+// Resolves to true when startup succeeded, false on failure. Replaced when
+// `startExternalDartFormatProcess` runs in `activate`. Format paths await it
+// so a user who hits Format during startup gets queued instead of bailing.
+let startupResultPromise: Promise<boolean> = Promise.resolve(false);
 
 export async function activate(context: vscode.ExtensionContext): Promise<void>
 {
@@ -39,17 +44,42 @@ export async function activate(context: vscode.ExtensionContext): Promise<void>
     );
     context.subscriptions.push(formattingProvider);
 
-    try
-    {
-        await startExternalDartFormatProcess();
-    }
-    catch (e)
-    {
-        logError(`startExternalDartFormatProcess: ${e}`);
-        NotificationTools.notifyError(`Could not start external dart_format: ${e}`);
-    }
+    // Kick off startup without blocking activate. Format paths can await
+    // `startupResultPromise` so a Format request issued during startup is
+    // queued and runs as soon as dart_format is ready.
+    startupResultPromise = startExternalDartFormatProcess()
+        .then(result =>
+        {
+            isStarted = result;
+            return result;
+        })
+        .catch(e =>
+        {
+            logError(`startExternalDartFormatProcess: ${e}`);
+            NotificationTools.notifyError(`Could not start external dart_format: ${e}`);
+            return false;
+        });
 
     if (Constants.DEBUG_STARTUP) logDebug("activate END");
+}
+
+// Returns true if dart_format is up and running. If startup is still in
+// progress, shows a "please wait" notification, awaits the result, and on
+// success shows a "ready, formatting now" notification. Mirrors the JetBrains
+// plugin's notifyWhenReady pattern but queues the in-flight Format request
+// instead of asking the user to retry.
+async function _ensureStartedOrNotify(): Promise<boolean>
+{
+    if (isStarted)
+        return true;
+
+    NotificationTools.notifyInfo("DartFormat: Please wait, dart_format is still starting ...");
+    const ready = await startupResultPromise;
+    if (!ready)
+        return false;
+
+    NotificationTools.notifyInfo("DartFormat: dart_format is ready. Formatting now ...");
+    return true;
 }
 
 export async function deactivate(): Promise<void>
@@ -173,7 +203,7 @@ async function provideDartFormattingEdits(
     token: vscode.CancellationToken
 ): Promise<vscode.TextEdit[] | undefined>
 {
-    if (!externalDartFormatProcess || !externalDartFormatProcess.isAlive())
+    if (!await _ensureStartedOrNotify())
         return undefined;
 
     if (!dartFormatClient)
@@ -219,7 +249,10 @@ async function formatFiles(uri: vscode.Uri | undefined, allUris: vscode.Uri[] | 
         return;
     }
 
-    if (!externalDartFormatProcess || !externalDartFormatProcess.isAlive() || !dartFormatClient)
+    if (!await _ensureStartedOrNotify())
+        return;
+
+    if (!dartFormatClient)
     {
         NotificationTools.notifyWarning('DartFormat: External dart format process is not running.');
         return;
@@ -460,8 +493,6 @@ async function startExternalDartFormatProcess(): Promise<boolean>
         }
         else
         {
-            NotificationTools.notifyInfo("External dart_format process is alive.\nWaiting for connection details ...");
-
             while (true)
             {
                 readLineResponse = await TimedReader.readLine(
@@ -579,11 +610,8 @@ async function startExternalDartFormatProcess(): Promise<boolean>
         if (httpResponse.status !== 200)
             throw DartFormatError.localError("External dart_format: Requested status but got: " + httpResponse.status + " " + httpResponse.body);
 
-        let message = "External dart_format is ready.";
         if (Constants.DEBUG_CONNECTION)
-            message += " " + JsonTools.stringify0(jsonResponse);
-
-        NotificationTools.notifyInfo(message);
+            logDebug("External dart_format is ready. " + JsonTools.stringify0(jsonResponse));
 
         // Only surface the manual Update notification when auto-update was already
         // attempted (and presumably failed). On a successful auto-update we restart

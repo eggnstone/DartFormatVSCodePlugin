@@ -10,6 +10,7 @@
 - Refuse to format files larger than dart_format's 4 MiB request limit, with a clear message instead of a round-trip server error.
 - Show a useful error message instead of crashing when dart_format returns an unexpected error response.
 - Cleaner shutdown: no more "DartFormat is stopping/stopped" notifications or fake startup delay; dart_format is signalled to quit cleanly when VSCode closes.
+- Quieter startup: no more "process is alive" / "is ready" notifications. If you try to format while dart_format is still starting, you'll see a one-time "please wait" notification; the format is queued and runs automatically as soon as it's ready.
 
 ## 1.0.0
 
