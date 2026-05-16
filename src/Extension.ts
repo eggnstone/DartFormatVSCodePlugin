@@ -76,20 +76,36 @@ async function formatText(unformattedText: string, config: Config): Promise<stri
     const dartFormatResult = response.headers.get("x-dartformat-result");
     if (dartFormatResult !== "OK")
     {
-        const dartFormatExceptionJsonString = response.headers.get("x-dartformat-exception") ?? "Unknown error.";
-        const dartFormatExceptionJson = JSON.parse(dartFormatExceptionJsonString);
-        const dartFormatError = DartFormatError.fromJson(dartFormatExceptionJson);
+        const exceptionJsonString = response.headers.get("x-dartformat-exception");
+        if (exceptionJsonString)
+        {
+            try
+            {
+                const dartFormatError = DartFormatError.fromJson(JSON.parse(exceptionJsonString));
 
-        let title = "Formatting failed";
-        const message = dartFormatError.message;
-        title += (dartFormatError.line !== undefined && dartFormatError.column !== undefined)
-            ? ` at ${dartFormatError.line}:${dartFormatError.column}.`
-            : ".";
+                let title = "Formatting failed";
+                const message = dartFormatError.message;
+                title += (dartFormatError.line !== undefined && dartFormatError.column !== undefined)
+                    ? ` at ${dartFormatError.line}:${dartFormatError.column}.`
+                    : ".";
 
-        if (dartFormatError.type === FailType.Warning)
-            NotificationTools.notifyWarning(title, message);
-        else
-            NotificationTools.notifyError(title, message);
+                if (dartFormatError.type === FailType.Warning)
+                    NotificationTools.notifyWarning(title, message);
+                else
+                    NotificationTools.notifyError(title, message);
+
+                return undefined;
+            }
+            catch (e)
+            {
+                logError(`Could not parse X-DartFormat-Exception header: ${e}`);
+            }
+        }
+
+        const bodyText = await response.text();
+        const title = `dart_format request failed (HTTP ${response.status}).`;
+        const message = bodyText || response.statusText || "No additional details.";
+        NotificationTools.notifyError(title, message);
 
         return undefined;
     }

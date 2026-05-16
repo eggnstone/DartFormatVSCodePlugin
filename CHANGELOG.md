@@ -3,6 +3,7 @@
 ## 2.0.0 (in progress)
 
 - Fixed truncated output on larger files.
+- Show a useful error message instead of crashing when dart_format returns an unexpected error response.
 
 ## 1.0.0
 
