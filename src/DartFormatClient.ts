@@ -26,7 +26,7 @@ export class DartFormatClient
         return fetch(url, options);
     }
 
-    async post(path: String, formData: FormData): Promise<Response>
+    async post(path: string, formData: FormData): Promise<Response>
     {
         const url = `${this.baseUrl}${path}`;
         const options = formData.generate();

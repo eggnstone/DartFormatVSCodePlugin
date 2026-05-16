@@ -11,7 +11,7 @@ export class Version
         this.patch = patch;
     }
 
-    static parse(s: String): Version
+    static parse(s: string): Version
     {
         const parts = s.split(".");
         const major = Number.parseInt(parts[0]);
@@ -21,7 +21,7 @@ export class Version
         return new Version(major, minor, patch);
     }
 
-    static parseOrUndefined(s: String): Version | undefined
+    static parseOrUndefined(s: string): Version | undefined
     {
         try
         {
@@ -33,12 +33,12 @@ export class Version
         }
     }
 
-    toString(): String
+    toString(): string
     {
         return `${this.major}.${this.minor}.${this.patch}`;
     }
 
-    isOlderThan(otherVersion: Version | undefined): Boolean
+    isOlderThan(otherVersion: Version | undefined): boolean
     {
         if (otherVersion === undefined)
             return false;

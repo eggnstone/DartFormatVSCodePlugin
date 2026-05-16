@@ -18,7 +18,7 @@ export class TimedReader
         stdOutReader: StreamReader,
         stdErrReader: StreamReader,
         timeoutInSeconds: number,
-        waitForName: String,
+        waitForName: string,
         expectProcessExit: boolean
     ): Promise<ReadLineResponse | undefined>
     {
@@ -72,7 +72,7 @@ export class TimedReader
         throw DartFormatError.localError(errorText);
     }
 
-    static receiveLines(streamReader: StreamReader, name: string, prefix: String): string | undefined
+    static receiveLines(streamReader: StreamReader, name: string, prefix: string): string | undefined
     {
         let r = "";
 

@@ -5,7 +5,7 @@ export class StringTools
         return `"${StringTools.toSafeString(s, maxLength)}"`;
     }
 
-    static toSafeString(o: any, maxLength: number = -1): String
+    static toSafeString(o: any, maxLength: number = -1): string
     {
         if (o === null)
         {
