@@ -181,8 +181,6 @@ async function formatText(unformattedText: string, config: Config, signal?: Abor
     }
 
     const formattedText = await response.text();
-    //logDebug("  formattedText: " + StringTools.toDisplayString(formattedText, 100));
-
     return formattedText;
 }
 

@@ -29,6 +29,7 @@ module.exports = [
             "curly": "off",
             "eqeqeq": "warn",
             "no-throw-literal": "warn",
+            "prefer-const": "error",
             "semi": "off"
         }
     }
