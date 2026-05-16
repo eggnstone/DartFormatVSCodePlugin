@@ -16,6 +16,10 @@ export class Constants
     static readonly HTTP_CLIENT_CONNECT_TIMEOUT_IN_SECONDS = 5;
     static readonly HTTP_CLIENT_CONNECTION_REQUEST_TIMEOUT_IN_SECONDS = 5;
 
+    // Mirrors dart_format's server-side cap (4 MiB). We pre-check the text
+    // size so the user gets a useful message before the round-trip 413.
+    static readonly MAX_REQUEST_BODY_SIZE_IN_BYTES = 4 * 1024 * 1024;
+
     static readonly SHOW_OPEN_FILE_IN_NOTIFICATION = Constants.DEBUG;
     static readonly SHOW_SLOW_TIMINGS = Constants.DEBUG;
     static readonly SHOW_TIMINGS_EVEN_AFTER_ERROR = Constants.DEBUG;

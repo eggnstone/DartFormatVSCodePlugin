@@ -68,6 +68,21 @@ async function formatText(unformattedText: string, config: Config, signal?: Abor
     if (!dartFormatClient)
         return undefined;
 
+    // Pre-check the size so the user gets a clear message before the
+    // server rejects the POST with 413. The 1 KiB margin covers the
+    // Config JSON and the multipart boundaries.
+    const textBytes = Buffer.byteLength(unformattedText, "utf8");
+    if (textBytes > Constants.MAX_REQUEST_BODY_SIZE_IN_BYTES - 1024)
+    {
+        const limitInMiB = (Constants.MAX_REQUEST_BODY_SIZE_IN_BYTES / (1024 * 1024)).toFixed(0);
+        const sizeInMiB = (textBytes / (1024 * 1024)).toFixed(2);
+        NotificationTools.notifyError(
+            "DartFormat: File too large to format.",
+            `dart_format limits the request size to ${limitInMiB} MiB. This file is ${sizeInMiB} MiB.`
+        );
+        return undefined;
+    }
+
     const formData = new FormData();
     formData.append("Config", config.toJsonString());
     formData.append("Text", unformattedText);
