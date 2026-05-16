@@ -56,4 +56,21 @@ export class Process
     {
         return this.childProcess.exitCode;
     }
+
+    kill(): void
+    {
+        if (this._isAlive)
+            this.childProcess.kill();
+    }
+
+    waitForExit(): Promise<number>
+    {
+        if (!this._isAlive)
+            return Promise.resolve(this.childProcess.exitCode ?? -1);
+
+        return new Promise(resolve =>
+        {
+            this.childProcess.once("exit", (code: number | null) => resolve(code ?? -1));
+        });
+    }
 }

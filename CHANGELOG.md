@@ -10,6 +10,9 @@
 - Removed the "DartFormat is stopping/stopped" notifications and the half-second startup delay on shutdown; dart_format is now signalled to quit cleanly when VSCode closes.
 - Formatting is now cancelable. Big files show a "Formatting ..." progress notification with a Cancel button.
 - Refuse to format files larger than dart_format's 4 MiB request limit, with a clear message instead of a round-trip server error.
+- Auto-install dart_format on first start instead of just showing an Install button.
+- Auto-update dart_format on startup when a newer version is announced.
+- Auto-recover from a stale dart_format snapshot after a Dart SDK upgrade by re-activating once and retrying.
 
 ## 1.0.0
 

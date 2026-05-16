@@ -15,6 +15,7 @@ import {FormData} from "./data/FormData";
 import {FailType} from "./enums/FailType";
 import {Config} from "./data/Config";
 import {ActionInfo} from "./data/ActionInfo";
+import {DartFormatInstaller} from "./tools/DartFormatInstaller";
 import {ExternalDartFormatTools} from "./tools/ExternalDartFormatTools";
 import {ProcessTools} from "./tools/ProcessTools";
 
@@ -81,6 +82,22 @@ async function formatText(unformattedText: string, config: Config, signal?: Abor
             `dart_format limits the request size to ${limitInMiB} MiB. This file is ${sizeInMiB} MiB.`
         );
         return undefined;
+    }
+
+    if (Constants.DEBUG_FAKE_FORMAT_DELAY)
+    {
+        logDebug("DEBUG_FAKE_FORMAT_DELAY active; sleeping ~5s before formatting (use Cancel to test).");
+        const wasAborted = await new Promise<boolean>(resolve =>
+        {
+            const t = setTimeout(() => resolve(false), 5000);
+            signal?.addEventListener("abort", () =>
+            {
+                clearTimeout(t);
+                resolve(true);
+            }, {once: true});
+        });
+        if (wasAborted)
+            return undefined;
     }
 
     const formData = new FormData();
@@ -295,121 +312,198 @@ async function provideDartFormattingEdits(
 
 async function startExternalDartFormatProcess(): Promise<boolean>
 {
-    const externalDartFormatFilePathOrError = ExternalDartFormatTools.getExternalDartFormatFilePathOrError();
-    if (externalDartFormatFilePathOrError.error)
-    {
-        const title = "Failed to start external dart_format: " + externalDartFormatFilePathOrError.error.message;
-        const content = "Did you install the dart_format package?\n" +
-            "Basically just execute this:<pre>dart pub global activate dart_format</pre>";
-        const actions = NotificationTools.createInstallActions("Install");
-        NotificationTools.notifyError(title, content, actions);
-        return false;
-    }
-
-    externalDartFormatProcess = ProcessTools.spawn(
-        externalDartFormatFilePathOrError.path!,
-        ["--web", "--errors-as-json", "--log-to-temp-file=true"]
-    );
-
-    if (!externalDartFormatProcess.isAlive())
-    {
-        const title = "Failed to start external dart_format: ?";
-        const content = "Did you install the dart_format package?\n" +
-            "Basically just execute this:<pre>dart pub global activate dart_format</pre>";
-        const actions = NotificationTools.createInstallActions("Install");
-        NotificationTools.notifyError(title, content, actions);
-        return false;
-    }
-
-    NotificationTools.notifyInfo("External dart_format process is alive.\nWaiting for connection details ...");
-
-    const processStdOutReader = new StreamReader(externalDartFormatProcess.stdOut, "stdout");
-    const processStdErrReader = new StreamReader(externalDartFormatProcess.stdErr, "stderr");
-    let readLineResponse: ReadLineResponse | undefined;
+    // One auto-attempt for each of: first-install, stale-snapshot recovery, version update.
+    // Each loop iteration spawns dart_format from scratch. The flags below stop us from
+    // looping forever if an install/update simply fails to produce a working binary.
+    let autoInstallAttempted = false;
+    let autoRecoveryAttempted = false;
+    let autoUpdateAttempted = false;
 
     while (true)
     {
-        readLineResponse = await TimedReader.readLine(
-            externalDartFormatProcess,
-            processStdOutReader,
-            processStdErrReader,
-            Constants.WAIT_FOR_EXTERNAL_DART_FORMAT_START_IN_SECONDS,
-            "connection details from external dart_format",
-            false
-        );
-        if (readLineResponse === undefined)
-            break;
-
-        if (readLineResponse.stdErr)
-            break;
-
-        if (readLineResponse.stdOut)
+        const externalDartFormatFilePathOrError = ExternalDartFormatTools.getExternalDartFormatFilePathOrError();
+        if (externalDartFormatFilePathOrError.error)
         {
-            if (readLineResponse.stdOut.startsWith("{"))
-                break;
+            if (autoInstallAttempted)
+            {
+                _notifyInstallFailed(externalDartFormatFilePathOrError.error.message);
+                return false;
+            }
 
-            logDebug("Unexpected plain text: " + readLineResponse.stdOut);
+            autoInstallAttempted = true;
+            if (!await DartFormatInstaller.tryInstall(false))
+                return false;
+            continue;
         }
+
+        externalDartFormatProcess = ProcessTools.spawn(
+            externalDartFormatFilePathOrError.path!,
+            ["--web", "--errors-as-json", "--log-to-temp-file=true"]
+        );
+
+        if (!externalDartFormatProcess.isAlive())
+        {
+            _notifyInstallFailed("Could not start external dart_format process.");
+            return false;
+        }
+
+        const processStdOutReader = new StreamReader(externalDartFormatProcess.stdOut, "stdout");
+        const processStdErrReader = new StreamReader(externalDartFormatProcess.stdErr, "stderr");
+        let readLineResponse: ReadLineResponse | undefined;
+
+        if (Constants.DEBUG_FAKE_KERNEL_MISMATCH && !autoRecoveryAttempted)
+        {
+            logDebug("DEBUG_FAKE_KERNEL_MISMATCH active; killing dart_format and injecting fake stderr.");
+            externalDartFormatProcess.kill();
+            readLineResponse = new ReadLineResponse(undefined, "Invalid kernel binary format version");
+        }
+        else
+        {
+            NotificationTools.notifyInfo("External dart_format process is alive.\nWaiting for connection details ...");
+
+            while (true)
+            {
+                readLineResponse = await TimedReader.readLine(
+                    externalDartFormatProcess,
+                    processStdOutReader,
+                    processStdErrReader,
+                    Constants.WAIT_FOR_EXTERNAL_DART_FORMAT_START_IN_SECONDS,
+                    "connection details from external dart_format",
+                    false
+                );
+                if (readLineResponse === undefined)
+                    break;
+
+                if (readLineResponse.stdErr)
+                    break;
+
+                if (readLineResponse.stdOut)
+                {
+                    if (readLineResponse.stdOut.startsWith("{"))
+                        break;
+
+                    logDebug("Unexpected plain text: " + readLineResponse.stdOut);
+                }
+            }
+        }
+
+        if (readLineResponse === undefined)
+            return false;
+
+        // Detect stale snapshot (Dart SDK changed since `pub global activate`):
+        // dart prints "Invalid kernel binary format version" or "Invalid SDK hash"
+        // on stderr instead of the JSON line. Re-activate once, then retry.
+        const stdErrLower = (readLineResponse.stdErr ?? "").toLowerCase();
+        const isKernelMismatch =
+            stdErrLower.includes("invalid kernel binary format version") ||
+            stdErrLower.includes("invalid sdk hash");
+
+        if (isKernelMismatch && !autoRecoveryAttempted)
+        {
+            autoRecoveryAttempted = true;
+            logDebug("Stale dart_format snapshot detected; re-activating once.");
+            NotificationTools.notifyInfo(
+                "DartFormat: Re-activating dart_format ...",
+                "The Dart SDK seems to have changed since the last activation."
+            );
+            externalDartFormatProcess.kill();
+            externalDartFormatProcess = undefined;
+            if (!await DartFormatInstaller.tryInstall(false))
+                return false;
+            continue;
+        }
+
+        const jsonEncodedResponse = readLineResponse.stdOut ?? readLineResponse.stdErr ?? "<no response>";
+        const jsonResponse = JsonTools.parseOrUndefined(jsonEncodedResponse);
+
+        if (jsonResponse === undefined)
+        {
+            const title = "External dart_format: Expected connection details in JSON but received plain text.";
+
+            let content = "";
+            if (readLineResponse.stdOut)
+                content += `\nStdOut: ${readLineResponse.stdOut}`;
+
+            content += TimedReader.receiveLines(processStdOutReader, "stdout", "\nStdOut: ") ?? "";
+            if (readLineResponse.stdErr)
+                content += `\nStdErr: ${readLineResponse.stdErr}`;
+
+            content += TimedReader.receiveLines(processStdErrReader, "stderr", "\nStdErr: ") ?? "";
+            content = content.trim();
+
+            if (content)
+                content += "\n";
+
+            content += "Did you install the dart_format package?\n" +
+                "Basically just execute this:<pre>dart pub global activate dart_format</pre>";
+
+            const actions = NotificationTools.createInstallActions("Install");
+            NotificationTools.notifyError(title, content, actions);
+            return false;
+        }
+
+        const baseUrl = JsonTools.getString(jsonResponse, "Message", "");
+        const currentVersion = Version.parseOrUndefined(JsonTools.getString(jsonResponse, "CurrentVersion", ""));
+        let latestVersion = Version.parseOrUndefined(JsonTools.getString(jsonResponse, "LatestVersion", ""));
+
+        if (Constants.DEBUG_FAKE_NEW_VERSION && !autoUpdateAttempted)
+        {
+            latestVersion = Version.parse("999.999.999");
+            logDebug(`DEBUG_FAKE_NEW_VERSION active; pretending latestVersion = ${latestVersion}`);
+        }
+
+        logDebug(`baseUrl:        ${baseUrl}`);
+        logDebug(`currentVersion: ${currentVersion}`);
+        logDebug(`latestVersion:  ${latestVersion}`);
+
+        // Auto-update: if a newer version is announced and we haven't tried yet,
+        // kill the running server, run `dart pub global activate dart_format`,
+        // and restart. If update fails, we fall through next iteration with
+        // autoUpdateAttempted=true and end up showing the manual Update action.
+        if (currentVersion?.isOlderThan(latestVersion) && !autoUpdateAttempted)
+        {
+            autoUpdateAttempted = true;
+            NotificationTools.notifyInfo(
+                `DartFormat: A new version of dart_format is available (${latestVersion}).`,
+                "Updating now ..."
+            );
+            externalDartFormatProcess.kill();
+            externalDartFormatProcess = undefined;
+            await DartFormatInstaller.tryInstall(true);
+            continue;
+        }
+
+        dartFormatClient = new DartFormatClient(baseUrl);
+        const httpResponse = await dartFormatClient.get("/status");
+        if (httpResponse.status !== 200)
+            throw DartFormatError.localError("External dart_format: Requested status but got: " + httpResponse.status + " " + httpResponse.body);
+
+        let message = "External dart_format is ready.";
+        if (Constants.DEBUG_CONNECTION)
+            message += " " + JsonTools.stringify0(jsonResponse);
+
+        NotificationTools.notifyInfo(message);
+
+        // Only surface the manual Update notification when auto-update was already
+        // attempted (and presumably failed). On a successful auto-update we restart
+        // with the new version, so currentVersion === latestVersion in that case.
+        if (currentVersion?.isOlderThan(latestVersion) && autoUpdateAttempted)
+        {
+            const title = "A new version of the dart_format package is available.";
+            const content = "<pre>Current version: " + currentVersion + "\nLatest version:  " + latestVersion + "</pre>";
+            const actions = NotificationTools.createInstallActions("Update");
+            NotificationTools.notifyInfo(title, content, actions);
+        }
+
+        return true;
     }
+}
 
-    if (readLineResponse === undefined)
-        return false;
-
-    const jsonEncodedResponse = readLineResponse.stdOut ?? readLineResponse.stdErr ?? "<no response>";
-    const jsonResponse = JsonTools.parseOrUndefined(jsonEncodedResponse);
-
-    if (jsonResponse === undefined)
-    {
-        const title = "External dart_format: Expected connection details in JSON but received plain text.";
-
-        let content = "";
-        if (readLineResponse.stdOut)
-            content += "\nStdOut: ${readLineResponse.stdOut}";
-
-        content += TimedReader.receiveLines(processStdOutReader, "stdout", "\nStdOut: ") ?? "";
-        if (readLineResponse.stdErr)
-            content += "\nStdErr: ${readLineResponse.stdErr}";
-
-        content += TimedReader.receiveLines(processStdErrReader, "stderr", "\nStdErr: ") ?? "";
-        content = content.trim();
-
-        if (content)
-            content += "\n";
-
-        content += "Did you install the dart_format package?\n" +
-            "Basically just execute this:<pre>dart pub global activate dart_format</pre>";
-
-        const actions = NotificationTools.createInstallActions("Install");
-        // TODO: add report link?
-        NotificationTools.notifyError(title, content, actions);
-        return false;
-    }
-
-    const baseUrl = JsonTools.getString(jsonResponse, "Message", "");
-    const currentVersion = Version.parseOrUndefined(JsonTools.getString(jsonResponse, "CurrentVersion", ""));
-    const latestVersion = Version.parseOrUndefined(JsonTools.getString(jsonResponse, "LatestVersion", ""));
-    logDebug(`baseUrl:        ${baseUrl}`);
-    logDebug(`currentVersion: ${currentVersion}`);
-    logDebug(`latestVersion:  ${latestVersion}`);
-
-    dartFormatClient = new DartFormatClient(baseUrl);
-    const httpResponse = await dartFormatClient.get("/status");
-    if (httpResponse.status !== 200)
-        throw DartFormatError.localError("External dart_format: Requested status but got: " + httpResponse.status + " " + httpResponse.body);
-
-    let message = "External dart_format is ready.";
-    if (Constants.DEBUG_CONNECTION)
-        message += " " + JsonTools.stringify0(jsonResponse);
-
-    NotificationTools.notifyInfo(message);
-
-    if (currentVersion?.isOlderThan(latestVersion))
-    {
-        const title = "A new version of the dart_format package is available.";
-        const content = "<pre>Current version: " + currentVersion + "\nLatest version:  " + latestVersion + "</pre>";
-        const actions = NotificationTools.createInstallActions("Update");
-        NotificationTools.notifyInfo(title, content, actions);
-    }
-
-    return true;
+function _notifyInstallFailed(reason: string): void
+{
+    const title = "Failed to start external dart_format: " + reason;
+    const content = "Did you install the dart_format package?\n" +
+        "Basically just execute this:<pre>dart pub global activate dart_format</pre>";
+    const actions = NotificationTools.createInstallActions("Install");
+    NotificationTools.notifyError(title, content, actions);
 }

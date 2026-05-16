@@ -13,6 +13,11 @@ export class Constants
     static readonly DEBUG_STREAM_READER = Constants.DEBUG && false;
     static readonly DEBUG_TIMED_READER = Constants.DEBUG && false;
 
+    // Test toggles. Flip each to true (in dev) to exercise the matching auto-recovery path.
+    static readonly DEBUG_FAKE_KERNEL_MISMATCH = Constants.DEBUG && false;  // pretend dart_format exited with the stale-snapshot stderr
+    static readonly DEBUG_FAKE_NEW_VERSION = Constants.DEBUG && false;      // pretend the announced latest version is way ahead
+    static readonly DEBUG_FAKE_FORMAT_DELAY = Constants.DEBUG && false;     // 5 s cancelable sleep before each format, to test the Cancel button
+
     static readonly HTTP_CLIENT_CONNECT_TIMEOUT_IN_SECONDS = 5;
     static readonly HTTP_CLIENT_CONNECTION_REQUEST_TIMEOUT_IN_SECONDS = 5;
 

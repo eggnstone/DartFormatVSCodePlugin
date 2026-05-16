@@ -6,16 +6,16 @@ Like dartfmt.
 But better ;)  
 Because it's configurable.
 
-Press `Ctrl`+`Alt`+`,` to format your code.
+**How to format:**  
+- `Ctrl`+`Alt`+`,` — DartFormat shortcut.  
+- `Shift`+`Alt`+`F` — standard "Format Document" command.  
+- Format-on-save (when enabled in your VSCode settings).  
 
-**Please note!**  
-You have to install the [dart_format](https://pub.dev/packages/dart_format) package on [pub.dev](https://pub.dev) package to use this extension!  
-Basically just call this from the command line:  
+Long-running formats show a progress notification with a Cancel button.
+
+**dart_format installation:**  
+The extension uses the [dart_format](https://pub.dev/packages/dart_format) package on [pub.dev](https://pub.dev). It is installed and kept up to date automatically; you don't need to run anything manually. The equivalent manual command is:  
 `dart pub global activate dart_format`
-
-**Beta version!**  
-Formatting the currently selected file already works.  
-Formatting multiple files comes soon.  
 
 **This extension:**  
 Source code: <a href="https://github.com/eggnstone/DartFormatVSCodePlugin">DartFormatVSCodePlugin on GitHub</a>  
