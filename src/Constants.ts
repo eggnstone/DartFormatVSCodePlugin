@@ -16,9 +16,6 @@ export class Constants
     static readonly HTTP_CLIENT_CONNECT_TIMEOUT_IN_SECONDS = 5;
     static readonly HTTP_CLIENT_CONNECTION_REQUEST_TIMEOUT_IN_SECONDS = 5;
 
-    static readonly REPO_NAME_DART_FORMAT = "DartFormat";
-    static readonly REPO_NAME_DART_FORMAT_JET_BRAINS_PLUGIN = "DartFormatVSCodePlugin";
-
     static readonly SHOW_OPEN_FILE_IN_NOTIFICATION = Constants.DEBUG;
     static readonly SHOW_SLOW_TIMINGS = Constants.DEBUG;
     static readonly SHOW_TIMINGS_EVEN_AFTER_ERROR = Constants.DEBUG;

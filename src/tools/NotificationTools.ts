@@ -40,20 +40,17 @@ export class NotificationTools
 
     static notifyError(message: string, content?: string, actions?: ActionInfo[]): void
     {
-        // noinspection JSIgnoredPromiseFromCall
-        this.notifyAsync(NotificationType.Error, message, content, actions);
+        void this.notifyAsync(NotificationType.Error, message, content, actions);
     }
 
     static notifyInfo(message: string, content?: string, actions?: ActionInfo[]): void
     {
-        // noinspection JSIgnoredPromiseFromCall
-        this.notifyAsync(NotificationType.Info, message, content, actions);
+        void this.notifyAsync(NotificationType.Info, message, content, actions);
     }
 
     static notifyWarning(message: string, content?: string, actions?: ActionInfo[]): void
     {
-        // noinspection JSIgnoredPromiseFromCall
-        this.notifyAsync(NotificationType.Warning, message, content, actions);
+        void this.notifyAsync(NotificationType.Warning, message, content, actions);
     }
 
     static async notifyAsync(type: NotificationType, message: string, content?: string, actions?: ActionInfo[]): Promise<void>

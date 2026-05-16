@@ -22,7 +22,6 @@ let externalDartFormatProcess: Process | undefined;
 let dartFormatClient: DartFormatClient | undefined;
 let isFormatting = false;
 
-// noinspection JSUnusedGlobalSymbols
 export async function activate(context: vscode.ExtensionContext): Promise<void>
 {
     if (Constants.DEBUG_STARTUP)
@@ -53,12 +52,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void>
     if (Constants.DEBUG_STARTUP) logDebug("activate END");
 }
 
-// noinspection JSUnusedGlobalSymbols
 export async function deactivate(): Promise<void>
 {
-    NotificationTools.notifyInfo('DartFormat is stopping ...');
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    NotificationTools.notifyInfo('DartFormat is stopped.');
+    // Best-effort: ask dart_format to shut down so it doesn't outlive the
+    // extension host. Failure is fine — the process is going away anyway.
+    if (dartFormatClient)
+    {
+        try { await dartFormatClient.get("/quit"); }
+        catch { /* ignore */ }
+    }
 }
 
 async function formatText(unformattedText: string, config: Config): Promise<string | undefined>
@@ -245,7 +247,7 @@ async function startExternalDartFormatProcess(): Promise<boolean>
 
     externalDartFormatProcess = ProcessTools.spawn(
         externalDartFormatFilePathOrError.path!,
-        ["--web", "--errors-as-json", "--log-to-temp-file"]
+        ["--web", "--errors-as-json", "--log-to-temp-file=true"]
     );
 
     if (!externalDartFormatProcess.isAlive())

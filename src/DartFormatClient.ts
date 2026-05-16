@@ -26,19 +26,10 @@ export class DartFormatClient
         return fetch(url, options);
     }
 
-    async post(path: string, formData: FormData): Promise<Response>
+    post(path: string, formData: FormData): Promise<Response>
     {
         const url = `${this.baseUrl}${path}`;
         const options = formData.generate();
-
-        //const startTime = new Date();
-        // noinspection UnnecessaryLocalVariableJS
-        const response = await fetch(url, options);
-        /*const endTime = new Date();
-        const diffTime = endTime.getTime() - startTime.getTime();
-        const diffTimeText = (diffTime < 1000) ? `${diffTime} ms` : `${diffTime / 1000.0} s`;
-        logDebug("fetch took " + diffTimeText);*/
-
-        return response;
+        return fetch(url, options);
     }
 }

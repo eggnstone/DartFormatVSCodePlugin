@@ -3,13 +3,11 @@ import {Constants} from "../Constants";
 
 export class JsonTools
 {
-    // noinspection JSUnusedGlobalSymbols
     static stringify0(process: any): string
     {
         return JSON.stringify(process, null, 0);
     }
 
-    // noinspection JSUnusedGlobalSymbols
     static stringify4(process: any): string
     {
         return JSON.stringify(process, null, 4);
@@ -36,7 +34,6 @@ export class JsonTools
         return JsonTools.getOrUndefined(json, key)?.toString() ?? def;
     }
 
-    // noinspection JSUnusedGlobalSymbols
     static getIntOrUndefined(json: any, key: string): number | undefined
     {
         if (Constants.DEBUG_JSON_TOOLS)
