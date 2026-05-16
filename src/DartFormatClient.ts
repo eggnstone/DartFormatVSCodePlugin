@@ -26,10 +26,13 @@ export class DartFormatClient
         return fetch(url, options);
     }
 
-    post(path: string, formData: FormData): Promise<Response>
+    post(path: string, formData: FormData, signal?: AbortSignal): Promise<Response>
     {
         const url = `${this.baseUrl}${path}`;
         const options = formData.generate();
+        if (signal !== undefined)
+            options.signal = signal;
+
         return fetch(url, options);
     }
 }

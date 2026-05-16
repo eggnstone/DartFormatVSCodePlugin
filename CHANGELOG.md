@@ -8,6 +8,7 @@
 - Ignore repeated Format shortcut presses while a format is already running.
 - DartFormat is now offered as a Format Document provider for Dart files, so "Format Document" (`Shift+Alt+F`) and format-on-save can route through it.
 - Removed the "DartFormat is stopping/stopped" notifications and the half-second startup delay on shutdown; dart_format is now signalled to quit cleanly when VSCode closes.
+- Formatting is now cancelable. Big files show a "Formatting ..." progress notification with a Cancel button.
 
 ## 1.0.0
 

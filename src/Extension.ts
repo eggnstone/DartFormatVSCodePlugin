@@ -63,19 +63,30 @@ export async function deactivate(): Promise<void>
     }
 }
 
-async function formatText(unformattedText: string, config: Config): Promise<string | undefined>
+async function formatText(unformattedText: string, config: Config, signal?: AbortSignal): Promise<string | undefined>
 {
     if (!dartFormatClient)
         return undefined;
 
-    //logDebug("formatText:");
     const formData = new FormData();
     formData.append("Config", config.toJsonString());
     formData.append("Text", unformattedText);
-    const response = await dartFormatClient.post("/format", formData);
-    //logDebug("  response.status:     " + response.status);
-    //logDebug("  response.statusText: " + response.statusText);
-    //response.headers.forEach((value, name) => logDebug("  header: " + name + ": " + value));
+
+    let response: Response;
+    try
+    {
+        response = await dartFormatClient.post("/format", formData, signal);
+    }
+    catch (e)
+    {
+        if (signal?.aborted)
+            return undefined;
+        const err = e as Error;
+        logError(`formatText: fetch failed: ${err}`);
+        NotificationTools.notifyError("dart_format request failed", err.message);
+        return undefined;
+    }
+
     if (!response.body)
     {
         logError('  response.body is undefined.');
@@ -183,32 +194,55 @@ async function formatGuarded(): Promise<void>
     const document = editor.document;
     const unformattedText = document.getText();
 
-    const startTime = new Date();
-    const formattedText = await formatText(unformattedText, config);
-    const endTime = new Date();
-    const diffTime = endTime.getTime() - startTime.getTime();
-    const diffTimeText = (diffTime < 1000) ? `${diffTime} ms` : `${diffTime / 1000.0} s`;
-    logDebug("formatText took " + diffTimeText);
+    await vscode.window.withProgress(
+        {
+            location: vscode.ProgressLocation.Notification,
+            title: "DartFormat: Formatting ...",
+            cancellable: true
+        },
+        async (_progress, token) =>
+        {
+            const controller = new AbortController();
+            const cancelSub = token.onCancellationRequested(() => controller.abort());
+            try
+            {
+                const startTime = Date.now();
+                const formattedText = await formatText(unformattedText, config, controller.signal);
+                const diffTime = Date.now() - startTime;
+                const diffTimeText = (diffTime < 1000) ? `${diffTime} ms` : `${diffTime / 1000.0} s`;
+                logDebug("formatText took " + diffTimeText);
 
-    if (!formattedText)
-        return;
+                if (formattedText === undefined)
+                    return;
 
-    await editor.edit((editBuilder) =>
-    {
-        const startPos = new Position(0, 0);
-        const endPos = document.positionAt(unformattedText.length);
-        editBuilder.replace(new Range(startPos, endPos), formattedText);
-    });
+                await editor.edit((editBuilder) =>
+                {
+                    const startPos = new Position(0, 0);
+                    const endPos = document.positionAt(unformattedText.length);
+                    editBuilder.replace(new Range(startPos, endPos), formattedText);
+                });
 
-    const title = `Formatting took ${diffTimeText}.`;
-    const content = formattedText === unformattedText ? "Nothing changed." : "";
-    NotificationTools.notifyInfo(title, content);
+                const title = `Formatting took ${diffTimeText}.`;
+                const content = formattedText === unformattedText ? "Nothing changed." : "";
+                NotificationTools.notifyInfo(title, content);
+            }
+            finally
+            {
+                cancelSub.dispose();
+            }
+        }
+    );
 }
 
 // Silent variant for VSCode's "Format Document" / format-on-save flow.
 // Skips status notifications (the user didn't ask via our command) but still
-// surfaces server-side errors through formatText.
-async function provideDartFormattingEdits(document: vscode.TextDocument): Promise<vscode.TextEdit[] | undefined>
+// surfaces server-side errors through formatText. Honours the cancellation
+// token VSCode passes in.
+async function provideDartFormattingEdits(
+    document: vscode.TextDocument,
+    _options: vscode.FormattingOptions,
+    token: vscode.CancellationToken
+): Promise<vscode.TextEdit[] | undefined>
 {
     if (!externalDartFormatProcess || !externalDartFormatProcess.isAlive())
         return undefined;
@@ -221,7 +255,19 @@ async function provideDartFormattingEdits(document: vscode.TextDocument): Promis
         return undefined;
 
     const unformattedText = document.getText();
-    const formattedText = await formatText(unformattedText, config);
+
+    const controller = new AbortController();
+    const cancelSub = token.onCancellationRequested(() => controller.abort());
+    let formattedText: string | undefined;
+    try
+    {
+        formattedText = await formatText(unformattedText, config, controller.signal);
+    }
+    finally
+    {
+        cancelSub.dispose();
+    }
+
     if (formattedText === undefined)
         return undefined;
 
