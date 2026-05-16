@@ -99,7 +99,7 @@
   },
   "description": "A formatter for Dart. Like dartfmt. But better ;) Because it's configurable.",
   "devDependencies": {
-    "@types/vscode": "^1.93.0",
+    "@types/vscode": "1.99.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.19.19",
     "@typescript-eslint/eslint-plugin": "^8.59.3",
@@ -111,7 +111,7 @@
   },
   "displayName": "DartFormat",
   "engines": {
-    "vscode": "^1.93.0"
+    "vscode": "^1.99.0"
   },
   "icon": "images/DartFormat512.png",
   "main": "./out/Extension.js",
