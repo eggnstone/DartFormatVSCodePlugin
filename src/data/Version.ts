@@ -40,7 +40,7 @@ export class Version
 
     isOlderThan(otherVersion: Version | undefined): Boolean
     {
-        if (otherVersion == null)
+        if (otherVersion === undefined)
             return false;
 
         if (this.major < otherVersion.major)
