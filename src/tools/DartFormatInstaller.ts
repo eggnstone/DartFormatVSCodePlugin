@@ -28,7 +28,7 @@ export class DartFormatInstaller
         // ProcessTools.spawn already handles the cross-platform plumbing:
         // Windows runs through cmd.exe; Unix runs through `$SHELL -ilc ...`
         // so the user's interactive PATH (where dart lives) is sourced.
-        const executable = dartPathOrError.path!;
+        const executable = dartPathOrError.path;
         const args = ["pub", "global", "activate", "dart_format"];
 
         NotificationTools.notifyInfo(`${verbIng} dart_format ...`, "This may take a few seconds.");

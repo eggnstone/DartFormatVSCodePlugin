@@ -18,12 +18,12 @@ export class NotificationTools
         });
 
         const installExternalDartFormatInfo = ExternalDartFormatTools.getDartPathOrError();
-        if (!installExternalDartFormatInfo.path)
+        if (installExternalDartFormatInfo.error)
             return undefined;
 
         // ProcessTools.spawn handles the platform plumbing (cmd.exe on Windows,
         // `$SHELL -ilc` on Unix to source rc files so `dart` is on PATH).
-        const dartPath = installExternalDartFormatInfo.path!;
+        const dartPath = installExternalDartFormatInfo.path;
         const activateArgs = ["pub", "global", "activate", "dart_format"];
         return ActionInfo.createExternalAction(name + " dart_format", dartPath, activateArgs, successAction);
     }

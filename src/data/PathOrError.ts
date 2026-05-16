@@ -1,21 +1,19 @@
-export class PathOrError
-{
-    readonly error?: Error;
-    readonly path?: string;
+// Discriminated union: each result has either `path` (success) or `error`
+// (failure), never both. Using `error?: undefined` on the success variant
+// lets TypeScript narrow `path` to `string` after an `if (info.error)`
+// early-return — no `!` non-null assertion needed at call sites.
+export type PathOrError =
+    | { readonly path: string; readonly error?: undefined }
+    | { readonly path?: undefined; readonly error: Error };
 
-    constructor(path?: string, error?: Error)
+export const PathOrError = {
+    path(path: string): PathOrError
     {
-        this.path = path;
-        this.error = error;
-    }
+        return {path};
+    },
 
-    static error(s: string)
+    error(message: string): PathOrError
     {
-        return new PathOrError(undefined, new Error(s));
+        return {error: new Error(message)};
     }
-
-    static path(path: string)
-    {
-        return new PathOrError(path, undefined);
-    }
-}
+};

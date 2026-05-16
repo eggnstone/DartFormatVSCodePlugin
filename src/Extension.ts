@@ -474,7 +474,7 @@ async function startExternalDartFormatProcess(): Promise<boolean>
         }
 
         externalDartFormatProcess = ProcessTools.spawn(
-            externalDartFormatFilePathOrError.path!,
+            externalDartFormatFilePathOrError.path,
             ["--web", "--errors-as-json", "--log-to-temp-file=true"]
         );
 

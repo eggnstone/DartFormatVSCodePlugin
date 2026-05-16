@@ -26,6 +26,7 @@ module.exports = [
                 }
             ],
             "@typescript-eslint/no-explicit-any": "error",
+            "@typescript-eslint/no-non-null-assertion": "error",
             "curly": "off",
             "eqeqeq": "warn",
             "no-throw-literal": "warn",
