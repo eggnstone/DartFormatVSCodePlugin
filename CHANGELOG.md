@@ -1,6 +1,6 @@
 # Change Log
 
-## 1.1.0 (in progress)
+## 2.0.0 (in progress)
 
 - Single-file formatting now uses VSCode's standard format flow (`Shift`+`Alt`+`F`, format-on-save, editor right-click → "Format Document"). The custom `Ctrl`+`Alt`+`,` shortcut and "Format Current File" command have been removed; rebind to `editor.action.formatDocument` in your `keybindings.json` if you want it back.
 - Format multiple files at once: Explorer right-click on a folder or multi-selected `.dart` files → "Format with DartFormat". Skips generated files (`.g.dart`, `.freezed.dart`, etc.), `.dart_tool/`, and `build/`. Cancelable progress notification reports per-file progress and a summary at the end.

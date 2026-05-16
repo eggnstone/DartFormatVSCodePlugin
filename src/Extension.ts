@@ -21,6 +21,11 @@ import {ProcessTools} from "./tools/ProcessTools";
 
 let externalDartFormatProcess: Process | undefined;
 let dartFormatClient: DartFormatClient | undefined;
+// dart_format 2.2.0+ announces these in the startup JSON. Used by future log-
+// surfacing / kill-the-stuck-server flows. Stays undefined for older binaries.
+let dartFormatLogFilePath: string | undefined;
+let dartFormatLogFileName: string | undefined;
+let dartFormatProcessId: number | undefined;
 let isFormatting = false;
 let isStarted = false;
 // Resolves to true when startup succeeded, false on failure. Replaced when
@@ -574,7 +579,19 @@ async function startExternalDartFormatProcess(): Promise<boolean>
             return false;
         }
 
-        const baseUrl = JsonTools.getString(jsonResponse, "Message", "");
+        // Prefer the structured fields announced by dart_format 2.2.0+; fall
+        // back to the legacy `Message` URL string for older binaries.
+        const protocol = JsonTools.getString(jsonResponse, "Protocol", "");
+        const address = JsonTools.getString(jsonResponse, "Address", "");
+        const port = JsonTools.getIntOrUndefined(jsonResponse, "Port");
+        const baseUrl = (protocol && address && port !== undefined)
+            ? `${protocol}://${address}:${port}`
+            : JsonTools.getString(jsonResponse, "Message", "");
+
+        dartFormatLogFilePath = JsonTools.getString(jsonResponse, "LogFilePath", "") || undefined;
+        dartFormatLogFileName = JsonTools.getString(jsonResponse, "LogFileName", "") || undefined;
+        dartFormatProcessId = JsonTools.getIntOrUndefined(jsonResponse, "ProcessId");
+
         const currentVersion = Version.parseOrUndefined(JsonTools.getString(jsonResponse, "CurrentVersion", ""));
         let latestVersion = Version.parseOrUndefined(JsonTools.getString(jsonResponse, "LatestVersion", ""));
 
@@ -587,6 +604,9 @@ async function startExternalDartFormatProcess(): Promise<boolean>
         logDebug(`baseUrl:        ${baseUrl}`);
         logDebug(`currentVersion: ${currentVersion}`);
         logDebug(`latestVersion:  ${latestVersion}`);
+        logDebug(`processId:      ${dartFormatProcessId}`);
+        logDebug(`logFilePath:    ${dartFormatLogFilePath}`);
+        logDebug(`logFileName:    ${dartFormatLogFileName}`);
 
         // Auto-update: if a newer version is announced and we haven't tried yet,
         // kill the running server, run `dart pub global activate dart_format`,
