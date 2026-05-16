@@ -20,6 +20,7 @@ import {ProcessTools} from "./tools/ProcessTools";
 
 let externalDartFormatProcess: Process | undefined;
 let dartFormatClient: DartFormatClient | undefined;
+let isFormatting = false;
 
 // noinspection JSUnusedGlobalSymbols
 export async function activate(context: vscode.ExtensionContext): Promise<void>
@@ -129,6 +130,25 @@ async function getConfigOrWarn(): Promise<Config | undefined>
 
 async function format(): Promise<void>
 {
+    if (isFormatting)
+    {
+        NotificationTools.notifyInfo("DartFormat: Already formatting. Please wait ...");
+        return;
+    }
+
+    isFormatting = true;
+    try
+    {
+        await formatGuarded();
+    }
+    finally
+    {
+        isFormatting = false;
+    }
+}
+
+async function formatGuarded(): Promise<void>
+{
     if (!externalDartFormatProcess || !externalDartFormatProcess.isAlive())
     {
         NotificationTools.notifyWarning('DartFormat: External dart format process is not running.');
@@ -152,8 +172,6 @@ async function format(): Promise<void>
     if (!config)
         return;
 
-    //NotificationTools.notifyInfo('Formatting ...');
-
     const document = editor.document;
     const unformattedText = document.getText();
 
@@ -170,7 +188,7 @@ async function format(): Promise<void>
     await editor.edit((editBuilder) =>
     {
         const startPos = new Position(0, 0);
-        const endPos = document.positionAt(unformattedText.length);// - 1);
+        const endPos = document.positionAt(unformattedText.length);
         editBuilder.replace(new Range(startPos, endPos), formattedText);
     });
 

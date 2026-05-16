@@ -5,6 +5,7 @@
 - Fixed truncated output on larger files.
 - Show a useful error message instead of crashing when dart_format returns an unexpected error response.
 - Honour the `PUB_CACHE` environment variable on macOS and Linux (previously only on Windows).
+- Ignore repeated Format shortcut presses while a format is already running.
 
 ## 1.0.0
 
