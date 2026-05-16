@@ -31,8 +31,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void>
         await getConfigOrWarn();
     }
 
-    const disposable = vscode.commands.registerCommand('DartFormat.format', format);
-    context.subscriptions.push(disposable);
+    context.subscriptions.push(vscode.commands.registerCommand('DartFormat.formatFiles', formatFiles));
 
     const formattingProvider = vscode.languages.registerDocumentFormattingEditProvider(
         {language: "dart"},
@@ -82,22 +81,6 @@ async function formatText(unformattedText: string, config: Config, signal?: Abor
             `dart_format limits the request size to ${limitInMiB} MiB. This file is ${sizeInMiB} MiB.`
         );
         return undefined;
-    }
-
-    if (Constants.DEBUG_FAKE_FORMAT_DELAY)
-    {
-        logDebug("DEBUG_FAKE_FORMAT_DELAY active; sleeping ~5s before formatting (use Cancel to test).");
-        const wasAborted = await new Promise<boolean>(resolve =>
-        {
-            const t = setTimeout(() => resolve(false), 5000);
-            signal?.addEventListener("abort", () =>
-            {
-                clearTimeout(t);
-                resolve(true);
-            }, {once: true});
-        });
-        if (wasAborted)
-            return undefined;
     }
 
     const formData = new FormData();
@@ -179,97 +162,11 @@ async function getConfigOrWarn(): Promise<Config | undefined>
     return undefined;
 }
 
-async function format(): Promise<void>
-{
-    if (isFormatting)
-    {
-        NotificationTools.notifyInfo("DartFormat: Already formatting. Please wait ...");
-        return;
-    }
-
-    isFormatting = true;
-    try
-    {
-        await formatGuarded();
-    }
-    finally
-    {
-        isFormatting = false;
-    }
-}
-
-async function formatGuarded(): Promise<void>
-{
-    if (!externalDartFormatProcess || !externalDartFormatProcess.isAlive())
-    {
-        NotificationTools.notifyWarning('DartFormat: External dart format process is not running.');
-        return;
-    }
-
-    if (!dartFormatClient)
-    {
-        NotificationTools.notifyWarning('DartFormat: External dart format process is not running.');
-        return;
-    }
-
-    const editor = vscode.window.activeTextEditor;
-    if (!editor)
-    {
-        NotificationTools.notifyInfo("Please open a file in order to format it.");
-        return;
-    }
-
-    const config = await getConfigOrWarn();
-    if (!config)
-        return;
-
-    const document = editor.document;
-    const unformattedText = document.getText();
-
-    await vscode.window.withProgress(
-        {
-            location: vscode.ProgressLocation.Notification,
-            title: "DartFormat: Formatting ...",
-            cancellable: true
-        },
-        async (_progress, token) =>
-        {
-            const controller = new AbortController();
-            const cancelSub = token.onCancellationRequested(() => controller.abort());
-            try
-            {
-                const startTime = Date.now();
-                const formattedText = await formatText(unformattedText, config, controller.signal);
-                const diffTime = Date.now() - startTime;
-                const diffTimeText = (diffTime < 1000) ? `${diffTime} ms` : `${diffTime / 1000.0} s`;
-                logDebug("formatText took " + diffTimeText);
-
-                if (formattedText === undefined)
-                    return;
-
-                await editor.edit((editBuilder) =>
-                {
-                    const startPos = new Position(0, 0);
-                    const endPos = document.positionAt(unformattedText.length);
-                    editBuilder.replace(new Range(startPos, endPos), formattedText);
-                });
-
-                const title = `Formatting took ${diffTimeText}.`;
-                const content = formattedText === unformattedText ? "Nothing changed." : "";
-                NotificationTools.notifyInfo(title, content);
-            }
-            finally
-            {
-                cancelSub.dispose();
-            }
-        }
-    );
-}
-
-// Silent variant for VSCode's "Format Document" / format-on-save flow.
-// Skips status notifications (the user didn't ask via our command) but still
-// surfaces server-side errors through formatText. Honours the cancellation
-// token VSCode passes in.
+// Single-file formatting entry point. VSCode calls this for the standard
+// "Format Document" command (Shift+Alt+F), the editor right-click menu,
+// and format-on-save. Silent on success — VSCode applies the returned
+// edits and shows its own progress in the status bar. Server-side errors
+// still surface via formatText's notifications.
 async function provideDartFormattingEdits(
     document: vscode.TextDocument,
     _options: vscode.FormattingOptions,
@@ -308,6 +205,210 @@ async function provideDartFormattingEdits(
 
     const fullRange = new Range(new Position(0, 0), document.positionAt(unformattedText.length));
     return [vscode.TextEdit.replace(fullRange, formattedText)];
+}
+
+// Invoked from the Explorer context menu (single-click or multi-selected files/folders).
+// VSCode passes the right-clicked URI as `uri` and the full selection as `allUris`
+// when more than one is selected; for a single right-click, `allUris` is undefined.
+async function formatFiles(uri: vscode.Uri | undefined, allUris: vscode.Uri[] | undefined): Promise<void>
+{
+    const initialUris = (allUris && allUris.length > 0) ? allUris : (uri ? [uri] : []);
+    if (initialUris.length === 0)
+    {
+        NotificationTools.notifyInfo("DartFormat: Nothing to format.");
+        return;
+    }
+
+    if (!externalDartFormatProcess || !externalDartFormatProcess.isAlive() || !dartFormatClient)
+    {
+        NotificationTools.notifyWarning('DartFormat: External dart format process is not running.');
+        return;
+    }
+
+    if (isFormatting)
+    {
+        NotificationTools.notifyInfo("DartFormat: Already formatting. Please wait ...");
+        return;
+    }
+
+    const config = await getConfigOrWarn();
+    if (!config)
+        return;
+
+    isFormatting = true;
+    try
+    {
+        await _formatFilesGuarded(initialUris, config);
+    }
+    finally
+    {
+        isFormatting = false;
+    }
+}
+
+async function _formatFilesGuarded(uris: vscode.Uri[], config: Config): Promise<void>
+{
+    const dartFiles: vscode.Uri[] = [];
+    for (const u of uris)
+        await _collectDartFiles(u, dartFiles);
+
+    if (dartFiles.length === 0)
+    {
+        NotificationTools.notifyInfo("DartFormat: No Dart files found.");
+        return;
+    }
+
+    const totalFiles = dartFiles.length;
+    const filesText = totalFiles === 1 ? "1 file" : `${totalFiles} files`;
+
+    await vscode.window.withProgress(
+        {
+            location: vscode.ProgressLocation.Notification,
+            title: "DartFormat",
+            cancellable: true
+        },
+        async (progress, token) =>
+        {
+            const controller = new AbortController();
+            const cancelSub = token.onCancellationRequested(() => controller.abort());
+            try
+            {
+                let changedCount = 0;
+                let processedCount = 0;
+                const startTime = Date.now();
+                const increment = 100 / totalFiles;
+
+                for (let i = 0; i < totalFiles; i++)
+                {
+                    if (token.isCancellationRequested)
+                        break;
+
+                    progress.report({
+                        message: `Formatting file ${i + 1}/${totalFiles} ...`,
+                        increment
+                    });
+
+                    if (await _formatOneFile(dartFiles[i], config, controller.signal))
+                        changedCount++;
+                    processedCount++;
+                }
+
+                const diffTime = Date.now() - startTime;
+                const diffTimeText = (diffTime < 1000) ? `${diffTime} ms` : `${diffTime / 1000.0} s`;
+                const processedText = processedCount === 1 ? "1 file" : `${processedCount} files`;
+                const changedText = changedCount === 0
+                    ? "Nothing changed."
+                    : (changedCount === 1 ? "1 file changed." : `${changedCount} files changed.`);
+                const cancelledSuffix = token.isCancellationRequested ? " (cancelled)" : "";
+                NotificationTools.notifyInfo(`Formatting ${processedText} took ${diffTimeText}${cancelledSuffix}.`, changedText);
+            }
+            finally
+            {
+                cancelSub.dispose();
+            }
+        }
+    );
+}
+
+async function _collectDartFiles(uri: vscode.Uri, out: vscode.Uri[]): Promise<void>
+{
+    let stat: vscode.FileStat;
+    try
+    {
+        stat = await vscode.workspace.fs.stat(uri);
+    }
+    catch (e)
+    {
+        logError(`Could not stat ${uri.fsPath}: ${e}`);
+        return;
+    }
+
+    if (stat.type === vscode.FileType.File)
+    {
+        if (_isDartFile(uri))
+            out.push(uri);
+        return;
+    }
+
+    if (stat.type === vscode.FileType.Directory)
+    {
+        const entries = await vscode.workspace.fs.readDirectory(uri);
+        for (const [name, type] of entries)
+        {
+            // Skip the obvious noise directories before recursing so we don't
+            // descend into massive trees that we'd filter out anyway.
+            if (type === vscode.FileType.Directory && (name === ".dart_tool" || name === "build" || name === "generated"))
+                continue;
+
+            const childUri = vscode.Uri.joinPath(uri, name);
+            await _collectDartFiles(childUri, out);
+        }
+    }
+}
+
+// Mirrors JetBrains plugin's PluginTools.isDartFile: skip codegen output and a
+// few well-known generated files.
+function _isDartFile(uri: vscode.Uri): boolean
+{
+    const lowerPath = uri.path.toLowerCase();
+    if (!lowerPath.endsWith(".dart"))
+        return false;
+
+    if (lowerPath.includes("/.dart_tool/") || lowerPath.includes("/generated/"))
+        return false;
+
+    const name = lowerPath.substring(lowerPath.lastIndexOf("/") + 1);
+    if (name === "firebase_options.dart")
+        return false;
+
+    const codegenSuffixes = [".freezed.dart", ".g.dart", ".gr.dart", ".pb.dart", ".pbenum.dart", ".pbjson.dart", ".pbserver.dart"];
+    for (const suffix of codegenSuffixes)
+    {
+        if (name.endsWith(suffix))
+            return false;
+    }
+
+    return true;
+}
+
+// Returns true if the file actually changed.
+async function _formatOneFile(fileUri: vscode.Uri, config: Config, signal: AbortSignal): Promise<boolean>
+{
+    if (Constants.DEBUG_FAKE_FORMAT_DELAY)
+    {
+        logDebug("DEBUG_FAKE_FORMAT_DELAY active; sleeping ~1s before formatting (use Cancel to test).");
+        const wasAborted = await new Promise<boolean>(resolve =>
+        {
+            const t = setTimeout(() => resolve(false), 1000);
+            signal.addEventListener("abort", () =>
+            {
+                clearTimeout(t);
+                resolve(true);
+            }, {once: true});
+        });
+        if (wasAborted)
+            return false;
+    }
+
+    const document = await vscode.workspace.openTextDocument(fileUri);
+    const unformattedText = document.getText();
+    const formattedText = await formatText(unformattedText, config, signal);
+
+    if (formattedText === undefined)
+        return false;
+
+    if (formattedText === unformattedText)
+        return false;
+
+    const fullRange = new Range(new Position(0, 0), document.positionAt(unformattedText.length));
+    const edit = new vscode.WorkspaceEdit();
+    edit.replace(fileUri, fullRange, formattedText);
+    const applied = await vscode.workspace.applyEdit(edit);
+    if (!applied)
+        return false;
+
+    await document.save();
+    return true;
 }
 
 async function startExternalDartFormatProcess(): Promise<boolean>

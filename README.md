@@ -7,11 +7,22 @@ But better ;)
 Because it's configurable.
 
 **How to format:**  
-- `Ctrl`+`Alt`+`,` — DartFormat shortcut.  
 - `Shift`+`Alt`+`F` — standard "Format Document" command.  
-- Format-on-save (when enabled in your VSCode settings).  
+- Editor right-click → "Format Document".  
+- Format-on-save (see *Setup* below).  
+- Explorer right-click on a folder or multi-selected `.dart` files → "Format with DartFormat".
 
-Long-running formats show a progress notification with a Cancel button.
+**Setup:**  
+If you also have the official Dart extension (Dart-Code) installed — which most people do — VSCode sees two formatters for `.dart` files and won't pick one for you. Add this to your settings.json so VSCode knows to use DartFormat for `.dart` files (and so format-on-save works):
+```json
+"[dart]": {
+    "editor.defaultFormatter": "eggnstone.DartFormat",
+    "editor.formatOnSave": true
+}
+```
+Without `editor.defaultFormatter`, `Shift`+`Alt`+`F` will prompt you to pick a formatter each time, and format-on-save will silently do nothing.
+
+You also need to enable at least one of the `dartFormat.*` options in settings (e.g. `dartFormat.spaces.fix`) — without any options enabled, DartFormat is a no-op.
 
 **dart_format installation:**  
 The extension uses the [dart_format](https://pub.dev/packages/dart_format) package on [pub.dev](https://pub.dev). It is installed and kept up to date automatically; you don't need to run anything manually. The equivalent manual command is:  

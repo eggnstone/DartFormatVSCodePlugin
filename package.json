@@ -8,10 +8,25 @@
   "contributes": {
     "commands": [
       {
-        "command": "DartFormat.format",
-        "title": "Format Dart"
+        "command": "DartFormat.formatFiles",
+        "title": "Format with DartFormat"
       }
     ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "DartFormat.formatFiles",
+          "when": "false"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "DartFormat.formatFiles",
+          "group": "1_dartformat",
+          "when": "explorerResourceIsFolder || resourceExtname == .dart"
+        }
+      ]
+    },
     "configuration": {
       "properties": {
         "dartFormat.lineBreaks.openingBraces.addBefore": {
@@ -80,13 +95,7 @@
         }
       }
     },
-    "keybindings": [
-      {
-        "command": "DartFormat.format",
-        "key": "ctrl+alt+oem_comma",
-        "mac": "cmd+alt+oem_comma"
-      }
-    ]
+    "keybindings": []
   },
   "description": "A formatter for Dart. Like dartfmt. But better ;) Because it's configurable.",
   "devDependencies": {

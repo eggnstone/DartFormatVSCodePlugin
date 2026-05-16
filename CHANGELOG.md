@@ -2,17 +2,14 @@
 
 ## 1.1.0 (in progress)
 
-- Fixed truncated output on larger files.
-- Show a useful error message instead of crashing when dart_format returns an unexpected error response.
+- Single-file formatting now uses VSCode's standard format flow (`Shift`+`Alt`+`F`, format-on-save, editor right-click → "Format Document"). The custom `Ctrl`+`Alt`+`,` shortcut and "Format Current File" command have been removed; rebind to `editor.action.formatDocument` in your `keybindings.json` if you want it back.
+- Format multiple files at once: Explorer right-click on a folder or multi-selected `.dart` files → "Format with DartFormat". Skips generated files (`.g.dart`, `.freezed.dart`, etc.), `.dart_tool/`, and `build/`. Cancelable progress notification reports per-file progress and a summary at the end.
+- Auto-install dart_format on first start, auto-update when a newer version is announced, and auto-recover from a stale snapshot after a Dart SDK upgrade.
 - Honour the `PUB_CACHE` environment variable on macOS and Linux (previously only on Windows).
-- Ignore repeated Format shortcut presses while a format is already running.
-- DartFormat is now offered as a Format Document provider for Dart files, so "Format Document" (`Shift+Alt+F`) and format-on-save can route through it.
-- Removed the "DartFormat is stopping/stopped" notifications and the half-second startup delay on shutdown; dart_format is now signalled to quit cleanly when VSCode closes.
-- Formatting is now cancelable. Big files show a "Formatting ..." progress notification with a Cancel button.
+- Fixed truncated output on larger files.
 - Refuse to format files larger than dart_format's 4 MiB request limit, with a clear message instead of a round-trip server error.
-- Auto-install dart_format on first start instead of just showing an Install button.
-- Auto-update dart_format on startup when a newer version is announced.
-- Auto-recover from a stale dart_format snapshot after a Dart SDK upgrade by re-activating once and retrying.
+- Show a useful error message instead of crashing when dart_format returns an unexpected error response.
+- Cleaner shutdown: no more "DartFormat is stopping/stopped" notifications or fake startup delay; dart_format is signalled to quit cleanly when VSCode closes.
 
 ## 1.0.0
 
