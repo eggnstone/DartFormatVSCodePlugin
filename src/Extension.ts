@@ -94,10 +94,7 @@ async function formatText(unformattedText: string, config: Config): Promise<stri
         return undefined;
     }
 
-    const result = await response.body.getReader().read();
-
-    // noinspection UnnecessaryLocalVariableJS
-    const formattedText = new TextDecoder().decode(result.value);
+    const formattedText = await response.text();
     //logDebug("  formattedText: " + StringTools.toDisplayString(formattedText, 100));
 
     return formattedText;

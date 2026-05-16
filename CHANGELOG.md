@@ -2,8 +2,7 @@
 
 ## 2.0.0 (in progress)
 
-- Tag every request to the dart_format server with the `X-DartFormat-Client: 1` header, in line with dart_format's staged-opt-in CSRF defence.
-- Bumped dev dependencies: TypeScript 5.9, ESLint 9.39, @typescript-eslint 8.59, @vscode/test-cli 0.0.12, @types/node 22.19.
+- Fixed truncated output on larger files.
 
 ## 1.0.0
 
