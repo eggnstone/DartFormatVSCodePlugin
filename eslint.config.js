@@ -25,6 +25,7 @@ module.exports = [
                     format: ["camelCase", "PascalCase"]
                 }
             ],
+            "@typescript-eslint/no-explicit-any": "error",
             "curly": "off",
             "eqeqeq": "warn",
             "no-throw-literal": "warn",

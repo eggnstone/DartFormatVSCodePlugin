@@ -32,15 +32,15 @@ export class DartFormatError extends Error
         return new DartFormatError(FailType.Error, ExceptionSourceType.Local, message, cause, line, column);
     }
 
-    static fromJson(json: string): DartFormatError
+    static fromJson(json: unknown): DartFormatError
     {
         return new DartFormatError(
             JsonTools.getOrUndefined(json, "Type") === "Warning" ? FailType.Warning : FailType.Error,
             ExceptionSourceType.Remote,
-            JsonTools.getOrUndefined(json, "Message") ?? "",
+            JsonTools.getString(json, "Message", ""),
             undefined,
-            JsonTools.getOrUndefined(json, "Line"),
-            JsonTools.getOrUndefined(json, "Column")
+            JsonTools.getIntOrUndefined(json, "Line"),
+            JsonTools.getIntOrUndefined(json, "Column")
         );
     }
 }

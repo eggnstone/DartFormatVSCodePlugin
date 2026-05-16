@@ -1,43 +1,29 @@
 export class FormData
 {
-    private parts: any = {};
+    private parts: Record<string, string> = {};
 
-    append(name: string, data: any)
+    append(name: string, data: string): void
     {
         this.parts[name] = data;
     }
 
-    generate(): any
+    generate(): RequestInit
     {
         const boundary = Date.now();
-        const bodyParts = [];
+        const bodyParts: string[] = [];
 
-        //logDebug("this.parts: " + this.parts);
         for (const partName of Object.keys(this.parts))
         {
-            //logDebug("partName: " + partName);
-            let partData = this.parts[partName];
-            // @deprecated since v10.0.0 - Use `Buffer.from(string[, encoding])` instead.
-            /*logDebug("partData: " + partData);
-            const x2 = Buffer.from(partData);
-            logDebug("x2: " + x2);*/
-            /*const x = new Buffer(partData);
-            logDebug("x: " + x);
-            partData = x.toString();//'base64');*/
-            //logDebug("partData: " + partData);
-
             bodyParts.push(
                 '--' + boundary,
                 'Content-Disposition: form-data; name="' + partName + '"',
                 'Content-Type: text/plain; charset=utf-8',
                 'Content-Transfer-Encoding: base64',
                 '',
-                partData);
+                this.parts[partName]);
         }
 
         bodyParts.push('--' + boundary + '--', '');
-        //logDebug("bodyParts: " + bodyParts);
-        //logDebug("bodyParts: " + bodyParts.join('\r\n'));
 
         return {
             method: 'POST',

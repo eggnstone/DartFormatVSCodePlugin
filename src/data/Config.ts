@@ -4,60 +4,29 @@ import {JsonTools} from "../tools/JsonTools";
 
 export class Config
 {
-    private readonly addNewLineBeforeOpeningBrace: boolean = false;
-    private readonly addNewLineAfterOpeningBrace: boolean = false;
-    private readonly addNewLineBeforeClosingBrace: boolean = false;
-    private readonly addNewLineAfterClosingBrace: boolean = false;
-    private readonly addNewLineAfterSemicolon: boolean = false;
-    private readonly addNewLineAtEndOfText: boolean = false;
-    private readonly fixSpaces: boolean = false;
-    private readonly removeTrailingCommas: boolean = false;
-    private readonly indentationSpacesPerLevel: number = -1;
-    private readonly maxEmptyLines: number = -1;
+    private readonly addNewLineBeforeOpeningBrace: boolean;
+    private readonly addNewLineAfterOpeningBrace: boolean;
+    private readonly addNewLineBeforeClosingBrace: boolean;
+    private readonly addNewLineAfterClosingBrace: boolean;
+    private readonly addNewLineAfterSemicolon: boolean;
+    private readonly addNewLineAtEndOfText: boolean;
+    private readonly fixSpaces: boolean;
+    private readonly removeTrailingCommas: boolean;
+    private readonly indentationSpacesPerLevel: number;
+    private readonly maxEmptyLines: number;
 
     private constructor(configuration: WorkspaceConfiguration)
     {
-        const lineBreaks: any = configuration.get("lineBreaks");
-        if (lineBreaks)
-        {
-            const openingBraces: any = lineBreaks["openingBraces"];
-            if (openingBraces)
-            {
-                this.addNewLineBeforeOpeningBrace = openingBraces["addBefore"] ?? false;
-                this.addNewLineAfterOpeningBrace = openingBraces["addAfter"] ?? false;
-            }
-
-            const closingBraces: any = lineBreaks["closingBraces"];
-            if (closingBraces)
-            {
-                this.addNewLineBeforeClosingBrace = closingBraces["addBefore"] ?? false;
-                this.addNewLineAfterClosingBrace = closingBraces["addAfter"] ?? false;
-            }
-
-            const semicolon: any = lineBreaks["semicolon"];
-            if (semicolon)
-                this.addNewLineAfterSemicolon = semicolon["addAfter"] ?? false;
-
-            const endOfFile: any = lineBreaks["endOfFile"];
-            if (endOfFile)
-                this.addNewLineAtEndOfText = endOfFile["add"] ?? false;
-        }
-
-        const spaces: any = configuration.get("spaces");
-        if (spaces)
-            this.fixSpaces = spaces["fix"] ?? false;
-
-        const removals: any = configuration.get("removals");
-        if (removals)
-            this.removeTrailingCommas = removals["trailingCommas"] ?? false;
-
-        const indentation: any = configuration.get("indentation");
-        if (indentation)
-            this.indentationSpacesPerLevel = indentation["spacesPerLevel"] ?? -1;
-
-        const emptyLines: any = configuration.get("emptyLines");
-        if (emptyLines)
-            this.maxEmptyLines = emptyLines["maxAllowed"] ?? -1;
+        this.addNewLineBeforeOpeningBrace = configuration.get<boolean>("lineBreaks.openingBraces.addBefore") ?? false;
+        this.addNewLineAfterOpeningBrace = configuration.get<boolean>("lineBreaks.openingBraces.addAfter") ?? false;
+        this.addNewLineBeforeClosingBrace = configuration.get<boolean>("lineBreaks.closingBraces.addBefore") ?? false;
+        this.addNewLineAfterClosingBrace = configuration.get<boolean>("lineBreaks.closingBraces.addAfter") ?? false;
+        this.addNewLineAfterSemicolon = configuration.get<boolean>("lineBreaks.semicolon.addAfter") ?? false;
+        this.addNewLineAtEndOfText = configuration.get<boolean>("lineBreaks.endOfFile.add") ?? false;
+        this.fixSpaces = configuration.get<boolean>("spaces.fix") ?? false;
+        this.removeTrailingCommas = configuration.get<boolean>("removals.trailingCommas") ?? false;
+        this.indentationSpacesPerLevel = configuration.get<number>("indentation.spacesPerLevel") ?? -1;
+        this.maxEmptyLines = configuration.get<number>("emptyLines.maxAllowed") ?? -1;
     }
 
     static parse(configuration: WorkspaceConfiguration): Config | undefined
@@ -87,7 +56,7 @@ export class Config
             this.maxEmptyLines < 0;
     }
 
-    toJson(): any
+    toJson(): Record<string, boolean | number>
     {
         return {
             "AddNewLineBeforeOpeningBrace": this.addNewLineBeforeOpeningBrace,
