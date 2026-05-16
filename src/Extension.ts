@@ -192,8 +192,10 @@ async function startExternalDartFormatProcess(): Promise<boolean>
         return false;
     }
 
-    const command = externalDartFormatFilePathOrError.path! + " --web --errors-as-json --log-to-temp-file";
-    externalDartFormatProcess = ProcessTools.spawn(command);
+    externalDartFormatProcess = ProcessTools.spawn(
+        externalDartFormatFilePathOrError.path!,
+        ["--web", "--errors-as-json", "--log-to-temp-file"]
+    );
 
     if (!externalDartFormatProcess.isAlive())
     {

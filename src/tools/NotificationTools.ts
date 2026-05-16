@@ -22,18 +22,20 @@ export class NotificationTools
         if (!installExternalDartFormatInfo.path)
             return undefined;
 
-        const command = installExternalDartFormatInfo.path! + " pub global activate dart_format";
+        const dartPath = installExternalDartFormatInfo.path!;
+        const activateArgs = ["pub", "global", "activate", "dart_format"];
 
         if (OsTools.instance.isWindows)
-            return ActionInfo.createExternalAction(name + " dart_format", command, successAction);
+            return ActionInfo.createExternalAction(name + " dart_format", dartPath, activateArgs, successAction);
 
         const envPath = process.env["PATH"];
         const pubCacheBinPath = OsTools.instance.envHome + "/.pub-cache/bin";
         if (envPath && envPath.indexOf(pubCacheBinPath) >= 0)
-            return ActionInfo.createExternalAction(name + " dart_format", command, successAction);
+            return ActionInfo.createExternalAction(name + " dart_format", dartPath, activateArgs, successAction);
 
-        const safeCommand = "export PATH=$PATH:" + pubCacheBinPath + " && " + command;
-        return ActionInfo.createExternalAction(name + " dart_format", safeCommand, successAction);
+        // Extend PATH for `dart pub global activate` so the cached binary is reachable afterwards.
+        const shellCommand = `export PATH="$PATH:${pubCacheBinPath}" && ${dartPath} ${activateArgs.join(" ")}`;
+        return ActionInfo.createExternalAction(name + " dart_format", "/bin/sh", ["-c", shellCommand], successAction);
     }
 
     static notifyError(message: string, content?: string, actions?: ActionInfo[]): void

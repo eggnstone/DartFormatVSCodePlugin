@@ -22,15 +22,16 @@ export class ActionInfo
         return new ActionInfo(name, () => vscode.env.openExternal(vscode.Uri.parse(url)));
     }
 
-    static createExternalAction(name: string, command: string, successAction: ActionInfo): ActionInfo
+    static createExternalAction(name: string, executable: string, args: string[], successAction: ActionInfo): ActionInfo
     {
         return new ActionInfo(name, async () =>
         {
-            NotificationTools.notifyInfo(("Starting process: " + command));
-            const process = ProcessTools.spawn(command);
+            const displayCommand = [executable, ...args].join(" ");
+            NotificationTools.notifyInfo(("Starting process: " + displayCommand));
+            const process = ProcessTools.spawn(executable, args);
             if (!process.isAlive())
             {
-                const title = "Failed to start process: " + command;
+                const title = "Failed to start process: " + displayCommand;
                 NotificationTools.notifyError(title);
                 return;
             }

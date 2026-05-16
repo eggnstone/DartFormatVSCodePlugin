@@ -16,15 +16,20 @@ export class ProcessTools
         return !process.isAlive();
     }
 
-    static spawn(command: string): Process
+    static spawn(executable: string, args: string[]): Process
     {
         logDebug("ProcessTools.spawn()");
-        /*logDebug("  envShell:      " + OsTools.instance.envShell);
-        logDebug("  envShellParam: " + OsTools.instance.envShellParam);*/
-        logDebug("  command:       " + command);
+        logDebug("  executable: " + executable);
+        logDebug("  args:       " + JSON.stringify(args));
 
-        const fullCommand = `${OsTools.instance.envShell} ${OsTools.instance.envShellParam} "${command}"`;
-        logDebug("  fullCommand:   " + fullCommand);
-        return new Process(spawn(fullCommand, {shell: true}));
+        if (OsTools.instance.isWindows)
+        {
+            // Node can't execute .bat/.cmd directly without a shell; route
+            // through cmd.exe so the path and args are passed as separate
+            // argv entries instead of a concatenated command line.
+            return new Process(spawn("cmd.exe", ["/c", executable, ...args]));
+        }
+
+        return new Process(spawn(executable, args));
     }
 }

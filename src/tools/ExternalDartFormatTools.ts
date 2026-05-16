@@ -34,9 +34,6 @@ export class ExternalDartFormatTools
         }
         else
         {
-            if (!OsTools.instance.envShell)
-                return PathOrError.error("Cannot execute dart_format: SHELL environment variable is not set.");
-
             if (!OsTools.instance.envHome)
                 return PathOrError.error("Cannot execute dart_format: HOME environment variable is not set.");
 
@@ -60,9 +57,6 @@ export class ExternalDartFormatTools
     {
         if (OsTools.instance.isWindows)
             return PathOrError.path("dart.bat");
-
-        if (!OsTools.instance.envShell)
-            return PathOrError.error("Cannot execute dart: SHELL environment variable is not set.");
 
         return PathOrError.path("dart");
     }

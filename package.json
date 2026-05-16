@@ -102,7 +102,7 @@
   },
   "displayName": "DartFormat",
   "engines": {
-    "vscode": "^2.0.0"
+    "vscode": "^1.93.0"
   },
   "icon": "images/DartFormat512.png",
   "main": "./out/Extension.js",
@@ -117,5 +117,5 @@
     "lint": "eslint src",
     "test": "vscode-test"
   },
-  "version": "1.0.0"
+  "version": "1.1.0"
 }
