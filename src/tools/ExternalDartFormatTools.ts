@@ -34,10 +34,24 @@ export class ExternalDartFormatTools
         }
         else
         {
-            if (!OsTools.instance.envHome)
-                return PathOrError.error("Cannot execute dart_format: HOME environment variable is not set.");
+            if (OsTools.instance.envPubCache)
+            {
+                externalDartFormatFilePath = OsTools.instance.envPubCache;
+            }
+            else
+            {
+                if (!OsTools.instance.envHome)
+                {
+                    return PathOrError.error(
+                        "Cannot find the dart_format package:" +
+                        " Neither PUB_CACHE nor HOME environment variable is set."
+                    );
+                }
 
-            externalDartFormatFilePath = OsTools.instance.envHome + "/.pub-cache/bin/dart_format";
+                externalDartFormatFilePath = OsTools.instance.envHome + "/.pub-cache";
+            }
+
+            externalDartFormatFilePath = externalDartFormatFilePath + "/bin/dart_format";
         }
 
         if (!fs.existsSync(externalDartFormatFilePath))

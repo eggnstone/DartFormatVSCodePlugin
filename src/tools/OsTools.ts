@@ -31,8 +31,10 @@ export class OsTools
             this.envHome = process.env["HOME"];
             logDebug("  \$HOME:          " + this.envHome);
 
+            this.envPubCache = process.env["PUB_CACHE"];
+            logDebug("  \$PUB_CACHE:     " + this.envPubCache);
+
             this.envLocalAppData = undefined;
-            this.envPubCache = undefined;
         }
     }
 }
