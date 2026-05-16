@@ -45,6 +45,7 @@ export class FormData
                 {
                     "User-Agent": "DartFormatPlugin",
                     'Content-Type': 'multipart/form-data; boundary=' + boundary,
+                    'X-DartFormat-Client': '1'
                 },
             body: bodyParts.join('\r\n')
         };

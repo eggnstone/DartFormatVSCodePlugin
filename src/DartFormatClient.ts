@@ -18,7 +18,8 @@ export class DartFormatClient
                 headers:
                     {
                         "User-Agent": "DartFormatPlugin",
-                        "Content-Type": "text/plain; charset=utf-8"
+                        "Content-Type": "text/plain; charset=utf-8",
+                        "X-DartFormat-Client": "1"
                     }
             };
 
