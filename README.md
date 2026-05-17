@@ -1,10 +1,24 @@
 # DartFormat
 
-**A formatter for Dart.**
+**A configurable formatter for Dart and Flutter.**
 
-Like dartfmt.  
-But better ;)  
-Because it's configurable.
+Unlike `dart format`, DartFormat has no built-in line-wrap rule. Your line breaks stay exactly where you put them — no forced rewrapping at column 80, no surprise reflows.
+
+| Before | After |
+|--------|-------|
+| ![Before](images/Before.png) | ![After](images/After.png) |
+
+DartFormat only changes what you explicitly enable:
+
+- Newlines before / after `{` and `}` (Allman braces)
+- Newline after `;` (one statement per line)
+- Trailing newline at end of file
+- Fix spaces (normalize around operators / keywords)
+- Indent width (spaces per level)
+- Max consecutive empty lines
+- Strip trailing commas
+
+Every option is individually toggleable in settings. With no options enabled, DartFormat is a no-op — so pick at least one (see *Setup*).
 
 **How to format:**  
 - `Shift`+`Alt`+`F` — standard "Format Document" command.  
@@ -22,7 +36,7 @@ If you also have the official Dart extension (Dart-Code) installed — which mos
 ```
 Without `editor.defaultFormatter`, `Shift`+`Alt`+`F` will prompt you to pick a formatter each time, and format-on-save will silently do nothing.
 
-You also need to enable at least one of the `dartFormat.*` options in settings (e.g. `dartFormat.spaces.fix`) — without any options enabled, DartFormat is a no-op.
+Then enable at least one `dartFormat.*` option in settings (e.g. `dartFormat.spaces.fix`).
 
 **dart_format installation:**  
 The extension uses the [dart_format](https://pub.dev/packages/dart_format) package on [pub.dev](https://pub.dev). It is installed and kept up to date automatically; you don't need to run anything manually. The equivalent manual command is:  

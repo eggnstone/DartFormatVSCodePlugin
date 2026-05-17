@@ -3,7 +3,9 @@
     "onStartupFinished"
   ],
   "categories": [
-    "Formatters"
+    "Formatters",
+    "Linters",
+    "Other"
   ],
   "contributes": {
     "commands": [
@@ -97,7 +99,7 @@
     },
     "keybindings": []
   },
-  "description": "A formatter for Dart. Like dartfmt. But better ;) Because it's configurable.",
+  "description": "Configurable Dart/Flutter formatter. Won't rewrap your lines. Each rule (brace placement, trailing commas, blank lines, indent) is opt-in.",
   "devDependencies": {
     "@types/vscode": "1.99.0",
     "@types/mocha": "^10.0.10",
@@ -109,11 +111,29 @@
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2"
   },
-  "displayName": "DartFormat",
+  "displayName": "DartFormat — Configurable Dart Formatter",
   "engines": {
     "vscode": "^1.99.0"
   },
+  "galleryBanner": {
+    "color": "#0175C2",
+    "theme": "dark"
+  },
   "icon": "images/DartFormat512.png",
+  "keywords": [
+    "dart",
+    "flutter",
+    "format",
+    "formatter",
+    "dartfmt",
+    "dart format",
+    "code style",
+    "prettier",
+    "indent",
+    "braces",
+    "trailing commas",
+    "pub.dev"
+  ],
   "main": "./out/Extension.js",
   "name": "DartFormat",
   "publisher": "eggnstone",
@@ -126,5 +146,5 @@
     "lint": "eslint src",
     "test": "vscode-test"
   },
-  "version": "2.0.0"
+  "version": "2.0.1"
 }
