@@ -1,5 +1,5 @@
-import * as vscode from 'vscode';
-import {Position, Range} from 'vscode';
+import * as vscode from "vscode";
+import {Position, Range} from "vscode";
 import {StreamReader} from "./StreamReader";
 import {ReadLineResponse} from "./data/ReadLineResponse";
 import {TimedReader} from "./TimedReader";
@@ -28,10 +28,11 @@ let dartFormatLogFileName: string | undefined;
 let dartFormatProcessId: number | undefined;
 let isFormatting = false;
 let isStarted = false;
-// Resolves to true when startup succeeded, false on failure. Replaced when
-// `startExternalDartFormatProcess` runs in `activate`. Format paths await it
-// so a user who hits Format during startup gets queued instead of bailing.
-let startupResultPromise: Promise<boolean> = Promise.resolve(false);
+// Set when the user requests Format before dart_format is up. Triggers a
+// single "ready now" notification when startup finishes. We deliberately do
+// NOT auto-format then — seconds may have passed and the user has likely
+// moved on. Matches the JetBrains sibling's notifyWhenReady behaviour.
+let notifyWhenReady = false;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void>
 {
@@ -49,44 +50,44 @@ export async function activate(context: vscode.ExtensionContext): Promise<void>
     );
     context.subscriptions.push(formattingProvider);
 
-    // Kick off startup without blocking activate. Format paths can await
-    // `startupResultPromise` so a Format request issued during startup is
-    // queued and runs as soon as dart_format is ready.
-    startupResultPromise = startExternalDartFormatProcess()
+    // Kick off startup without blocking activate. A Format request issued
+    // during startup bails immediately with a "not available yet" notice and
+    // sets `notifyWhenReady`; once startup succeeds we fire a single "ready
+    // now" notification — no auto-format.
+    void startExternalDartFormatProcess()
         .then(result =>
         {
             isStarted = result;
-            return result;
+            if (result && notifyWhenReady)
+            {
+                notifyWhenReady = false;
+                NotificationTools.notifyInfo("DartFormat: dart_format is ready now.");
+            }
         })
         .catch(e =>
         {
             logError(`startExternalDartFormatProcess: ${e}`);
             NotificationTools.notifyError(`Could not start external dart_format: ${e}`);
-            return false;
         });
 
     if (Constants.DEBUG_STARTUP) logDebug("activate END");
 }
 
-// Returns true if dart_format is up and running. If startup is still in
-// progress, shows a "please wait" notification, awaits the result, and on
-// success shows a "ready, formatting now" notification. Mirrors the JetBrains
-// plugin's notifyWhenReady pattern but queues the in-flight Format request
-// instead of asking the user to retry.
-async function _ensureStartedOrNotify(): Promise<boolean>
+// Returns true if dart_format is up and running. Otherwise notifies the user
+// that it isn't available yet, arms `notifyWhenReady`, and returns false —
+// the caller bails. We never await startup here, to avoid auto-formatting
+// seconds later when the user has moved on.
+function _ensureStartedOrNotify(): boolean
 {
     if (isStarted)
         return true;
 
-    NotificationTools.notifyInfo("DartFormat: Please wait, dart_format is still starting ...");
-    const ready = await startupResultPromise;
-    if (!ready)
-        return false;
-
-    NotificationTools.notifyInfo("DartFormat: dart_format is ready. Formatting now ...");
-    return true;
+    notifyWhenReady = true;
+    NotificationTools.notifyInfo("DartFormat: dart_format is not available yet. Please try again in a moment.");
+    return false;
 }
 
+// noinspection JSUnusedGlobalSymbols
 export async function deactivate(): Promise<void>
 {
     // Best-effort: ask dart_format to shut down so it doesn't outlive the
@@ -180,8 +181,7 @@ async function formatText(unformattedText: string, config: Config, signal?: Abor
         return undefined;
     }
 
-    const formattedText = await response.text();
-    return formattedText;
+    return await response.text();
 }
 
 async function getConfigOrWarn(): Promise<Config | undefined>
@@ -206,7 +206,7 @@ async function provideDartFormattingEdits(
     token: vscode.CancellationToken
 ): Promise<vscode.TextEdit[] | undefined>
 {
-    if (!await _ensureStartedOrNotify())
+    if (!_ensureStartedOrNotify())
         return undefined;
 
     if (!dartFormatClient)
@@ -252,7 +252,7 @@ async function formatFiles(uri: vscode.Uri | undefined, allUris: vscode.Uri[] | 
         return;
     }
 
-    if (!await _ensureStartedOrNotify())
+    if (!_ensureStartedOrNotify())
         return;
 
     if (!dartFormatClient)
@@ -295,7 +295,6 @@ async function _formatFilesGuarded(uris: vscode.Uri[], config: Config): Promise<
     }
 
     const totalFiles = dartFiles.length;
-    const filesText = totalFiles === 1 ? "1 file" : `${totalFiles} files`;
 
     await vscode.window.withProgress(
         {
@@ -606,7 +605,7 @@ async function startExternalDartFormatProcess(): Promise<boolean>
         logDebug(`logFilePath:    ${dartFormatLogFilePath}`);
         logDebug(`logFileName:    ${dartFormatLogFileName}`);
 
-        // Auto-update: if a newer version is announced and we haven't tried yet,
+        // Auto-update: if a newer version is announced, and we haven't tried yet,
         // kill the running server, run `dart pub global activate dart_format`,
         // and restart. If update fails, we fall through next iteration with
         // autoUpdateAttempted=true and end up showing the manual Update action.
