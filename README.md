@@ -6,30 +6,26 @@ Unlike `dart format`, DartFormat has no built-in line-wrap rule. Your line break
 
 | Before | After |
 |--------|-------|
-| ![Before](https://raw.githubusercontent.com/eggnstone/dart_format/master/images/Before.png) | ![After](https://raw.githubusercontent.com/eggnstone/dart_format/master/images/After.png) |
+| <img src="https://raw.githubusercontent.com/eggnstone/dart_format/master/images/Before.png" alt="Before" width="400"> | <img src="https://raw.githubusercontent.com/eggnstone/dart_format/master/images/After.png" alt="After" width="400"> |
 
 DartFormat only changes what you explicitly enable:
 
-<ul>
-<li>Newlines before / after <code>{</code> and <code>}</code> (Allman braces)</li>
-<li>Newline after <code>;</code> (one statement per line)</li>
-<li>Trailing newline at end of file</li>
-<li>Fix spaces (normalize around operators / keywords)</li>
-<li>Indent width (spaces per level)</li>
-<li>Max consecutive empty lines</li>
-<li>Strip trailing commas</li>
-</ul>
+• Newlines before / after `{` and `}` (Allman braces)  
+• Newline after `;` (one statement per line)  
+• Trailing newline at end of file  
+• Fix spaces (normalize around operators / keywords)  
+• Indent width (spaces per level)  
+• Max consecutive empty lines  
+• Strip trailing commas
 
 Every option is individually toggleable in settings. With no options enabled, DartFormat is a no-op — so pick at least one (see *Setup*).
 
 **How to format:**
 
-<ul>
-<li><code>Shift</code>+<code>Alt</code>+<code>F</code> — standard "Format Document" command.</li>
-<li>Editor right-click → "Format Document".</li>
-<li>Format-on-save (see <em>Setup</em> below).</li>
-<li>Explorer right-click on a folder or multi-selected <code>.dart</code> files → "Format with DartFormat".</li>
-</ul>
+• `Shift`+`Alt`+`F` — standard "Format Document" command.  
+• Editor right-click → "Format Document".  
+• Format-on-save (see *Setup* below).  
+• Explorer right-click on a folder or multi-selected `.dart` files → "Format with DartFormat".
 
 **Setup:**  
 If you also have the official Dart extension (Dart-Code) installed — which most people do — VSCode sees two formatters for `.dart` files and won't pick one for you. Add this to your settings.json so VSCode knows to use DartFormat for `.dart` files (and so format-on-save works):
