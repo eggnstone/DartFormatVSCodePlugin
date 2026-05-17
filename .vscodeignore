@@ -11,6 +11,12 @@ vsc-extension-quickstart.md
 **/.vscode-test.*
 
 ### Manually added ###
-/.idea/
+.claude/**
+.idea/**
+node_modules/**
+notes/**
 *.bat
+eslint.config.js
+images/*.svg
+package-lock.json
 TODO.md
