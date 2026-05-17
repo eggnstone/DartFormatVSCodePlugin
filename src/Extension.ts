@@ -18,6 +18,8 @@ import {ActionInfo} from "./data/ActionInfo";
 import {DartFormatInstaller} from "./tools/DartFormatInstaller";
 import {ExternalDartFormatTools} from "./tools/ExternalDartFormatTools";
 import {ProcessTools} from "./tools/ProcessTools";
+import {WelcomeNotification} from "./tools/WelcomeNotification";
+import {FlutterSdkBootstrapTools} from "./tools/FlutterSdkBootstrapTools";
 
 let externalDartFormatProcess: Process | undefined;
 let dartFormatClient: DartFormatClient | undefined;
@@ -69,6 +71,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void>
             logError(`startExternalDartFormatProcess: ${e}`);
             NotificationTools.notifyError(`Could not start external dart_format: ${e}`);
         });
+
+    void WelcomeNotification.tryShow(context);
 
     if (Constants.DEBUG_STARTUP) logDebug("activate END");
 }
@@ -486,6 +490,20 @@ async function startExternalDartFormatProcess(): Promise<boolean>
         const processStdOutReader = new StreamReader(externalDartFormatProcess.stdOut, "stdout");
         const processStdErrReader = new StreamReader(externalDartFormatProcess.stdErr, "stderr");
         let readLineResponse: ReadLineResponse | undefined;
+        let sdkDownloadAnnounced = false;
+
+        if (Constants.DEBUG_FAKE_FLUTTER_SDK_DOWNLOAD)
+        {
+            logDebug("DEBUG_FAKE_FLUTTER_SDK_DOWNLOAD active; firing fake bootstrap notification.");
+            for (const fakeLine of ["Checking Dart SDK version...", "Downloading Dart SDK from Flutter engine 1234567890abcdef..."])
+            {
+                if (!sdkDownloadAnnounced && FlutterSdkBootstrapTools.isBootstrapStderr(fakeLine))
+                {
+                    sdkDownloadAnnounced = true;
+                    FlutterSdkBootstrapTools.notifyInProgress();
+                }
+            }
+        }
 
         if (Constants.DEBUG_FAKE_KERNEL_MISMATCH && !autoRecoveryAttempted)
         {
@@ -509,7 +527,20 @@ async function startExternalDartFormatProcess(): Promise<boolean>
                     break;
 
                 if (readLineResponse.stdErr)
+                {
+                    // Flutter bootstrap chatter while it pulls down a fresh Dart SDK isn't a
+                    // failure — tell the user why startup is hanging and keep waiting for JSON.
+                    if (FlutterSdkBootstrapTools.isBootstrapStderr(readLineResponse.stdErr))
+                    {
+                        if (!sdkDownloadAnnounced)
+                        {
+                            sdkDownloadAnnounced = true;
+                            FlutterSdkBootstrapTools.notifyInProgress();
+                        }
+                        continue;
+                    }
                     break;
+                }
 
                 if (readLineResponse.stdOut)
                 {

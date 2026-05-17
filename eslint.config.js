@@ -27,6 +27,14 @@ module.exports = [
             ],
             "@typescript-eslint/no-explicit-any": "error",
             "@typescript-eslint/no-non-null-assertion": "error",
+            "@typescript-eslint/no-unused-vars": [
+                "error",
+                {
+                    argsIgnorePattern: "^_",
+                    varsIgnorePattern: "^_",
+                    caughtErrorsIgnorePattern: "^_"
+                }
+            ],
             "curly": "off",
             "eqeqeq": "warn",
             "no-throw-literal": "warn",

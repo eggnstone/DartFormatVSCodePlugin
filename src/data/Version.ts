@@ -27,7 +27,7 @@ export class Version
         {
             return Version.parse(s);
         }
-        catch (e)
+        catch
         {
             return undefined;
         }
